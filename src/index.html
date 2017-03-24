@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Web MIDI Lab</title>
+    <meta name="description" content="Test Web MIDI in your browser">
+    <meta name="author" content="francois.georgy@gmail.com">
+    <link rel="stylesheet" href="css/spectre.min.css" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script src="lib/nexusUI.js"></script>
+</head>
+<body>
+    <header class="navbar">
+        <section class="navbar-primary">
+            <a href="#" class="navbar-brand mr-10">Web MIDI Lab</a>
+        </section>
+        <section class="navbar-section">
+            <a href="#" class="btn btn-link">Doc</a>
+        </section>
+        <section class="navbar-section">
+            <a href="https://github.com/francoisgeorgy/web-midi-lab" class="btn-link">GitHub</a>
+        </section>
+    </header>
+    <div class="container">
+        <div class="columns col-gapless">
+            <div class="column col-4">
+                <div>
+                    <h4>Inputs</h4>
+                    <div class="form-group">
+                        <label class="form-switch">
+                            <input type="checkbox" /><i class="form-icon"></i> Device abc
+                        </label><br />
+                        <label class="form-switch">
+                            <input type="checkbox" /><i class="form-icon"></i> Device xyz
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="column col-4">
+                <div>
+                    <h4>Outputs</h4>
+                    <div class="form-group">
+                        <label class="form-switch">
+                            <input type="checkbox" /><i class="form-icon"></i> Device abc
+                        </label><br />
+                        <label class="form-switch">
+                            <input type="checkbox" /><i class="form-icon"></i> Device xyz
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="column col-4">
+                <div>
+                    <h4>Options</h4>
+                    <div class="form-group">
+                        <label class="form-switch">
+                            <input type="checkbox" /><i class="form-icon"></i> Option 1
+                        </label><br />
+                        <label class="form-switch">
+                            <input type="checkbox" /><i class="form-icon"></i> Option 2
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="columns">
+            <div class="column col-12">
+                <div>
+                    <h4>Messages</h4>
+                    <div>
+                        <div class="form-group">
+                            <label class="form-radio">
+                                <input type="radio" name="msg-opt-1" />
+                                <i class="form-icon"></i> option 1
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="msg-opt-2" checked />
+                                <i class="form-icon"></i> option 2
+                            </label>
+                            <label class="form-switch">
+                                <input type="checkbox" /><i class="form-icon"></i> bin
+                            </label>
+                            <label class="form-switch">
+                                <input type="checkbox" /><i class="form-icon"></i> dec
+                            </label>
+                            <label class="form-switch">
+                                <input type="checkbox" /><i class="form-icon"></i> hex
+                            </label>
+                        </div>
+                    </div>
+                    <div>messages...</div>
+                </div>
+            </div>
+        </div>
+        <div class="columns col-12">
+            <div class="column col-12">
+                <div>
+                    <h4>Controlers</h4>
+                    <div>
+                        <canvas id="c1" nx="dial" min="0" max="127" label="C1" height="80" width="80"></canvas>
+                        <canvas id="c2" nx="dial" min="0" max="127" label="C2" height="80" width="80"></canvas>
+                        <canvas id="c3" nx="dial" min="0" max="127" label="C3" height="80" width="80"></canvas>
+                        <canvas id="c4" nx="dial" min="0" max="127" label="C4" height="80" width="80"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="columns col-12">
+            <div class="column col-12">
+                <div>
+                    <h4>Keyboard</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+	    nx.onload = function() {
+	        nx.colorize("#00CCFF"); // sets accent (default) 
+            /*
+            c1.val.value = Math.random() * 127;
+            c2.val.value = Math.random() * 127;
+            c3.val.value = Math.random() * 127; 
+            c4.val.value = Math.random() * 127;
+            */
+	    }
+    </script>
+</body>
+</html>
