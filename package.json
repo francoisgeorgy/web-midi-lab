@@ -1,0 +1,9 @@
+{
+  "name": "web-midi-lab",
+  "version": "1.0.0",
+  "description": "Web MIDI Lab",
+  "main": "index.js",
+  "repository": "https://github.com/francoisgeorgy/web-midi-lab.git",
+  "author": "François Georgy <francois.georgy@gmail.com>",
+  "license": "MIT"
+}
