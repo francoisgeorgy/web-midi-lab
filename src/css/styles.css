@@ -7,6 +7,13 @@
   border:1px solid black;*/
 }
 
+#messages {
+    background-color: #f8f9fa;
+    margin: 1rem 0 0 0;
+    padding: 1rem;
+    border: 1px solid #eeeeee;
+}
+
 /*
 .version::after {
   content: "0.2.9";
