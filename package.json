@@ -5,5 +5,8 @@
   "main": "index.js",
   "repository": "https://github.com/francoisgeorgy/web-midi-lab.git",
   "author": "François Georgy <francois.georgy@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "spectre.css": "^0.2.10"
+  }
 }
