@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Web MIDI Lab - Events</title>
+    <meta name="description" content="Test Web MIDI in your browser">
+    <meta name="author" content="francois.georgy@gmail.com">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="webmidi.min.js"></script>
+    <style>
+        .gray-box {
+            border:1px solid #aaa;
+            background-color:#f0f0f0;
+            padding:1rem;
+            margin:1rem;
+            text-align:left;
+        }
+        #events {
+            font-family: monospace;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+    <div id="events" class="gray-box"></div>
+    <script>
+
+        var midi = null;  // global MIDIAccess object
+
+        function log(msg) {
+            $("#events").prepend(msg + "\n");
+        }
+
+        function listInputsAndOutputs( midiAccess ) {
+            for (var entry of midiAccess.inputs) {
+                var input = entry[1];
+                log( "Input type:" + input.type + " id:" + input.id.substring(0,6) + "..." +
+                    " man:" + input.manufacturer + " name:" + input.name +
+                    " ver:" + input.version);
+            }
+
+            for (var entry of midiAccess.outputs) {
+                var output = entry[1];
+                log( "Output type:" + output.type + " id:" + output.id.substring(0,6) + "..." +
+                    " man:" + output.manufacturer + " name:" + output.name +
+                    " ver:" + output.version);
+            }
+        }
+
+        function logMidiEvent(e) {
+            log("[" + e.timeStamp.toFixed(3) + "] event:" + e.type + " id:" + e.port.id.substring(0,6) + "..." +
+                " man:" + e.port.manufacturer + " name:" + e.port.name + " state:" + e.port.state + " in:" + e.port);
+            //log(e)
+        }
+
+        function handleMessage(event) {
+            console.log("handleMessage", event);
+            logMidiEvent(event);
+
+            /** @type Uint8Array */
+            /*
+            var bytes = event.data;
+
+            // The MIDI channel
+            var channel = bytes[0] & 0x0F;
+
+            // The MIDI event type
+            var type = bytes[0] & 0xF0;
+
+            if (type === 0x90) {
+                handleNoteOn(bytes[1], bytes[2]);
+            } else if (type === 0x80) {
+                handleNoteOff(bytes[1], bytes[2]);
+            }
+            */
+        }
+
+        function handleStateChange(event) {
+            console.log("handleStateChange", event);
+            logMidiEvent(event);
+
+            /** @type (MIDIInput|MIDIOutput) */
+            var device = event.port;
+
+            if (device.state === "connected") {
+                // Handle the connection
+                if (device.type === "input") {
+                    device.onmidimessage = handleMessage;
+                }
+            } else if (device.state === "disconnected") {
+                // Handle the disconnection
+                if (device.type === "input") {
+                    device.onmidimessage = null;
+                }
+            }
+
+        }
+
+        $(function() {
+
+            function onMIDISuccess( midiAccess ) {
+                console.log( "MIDI ready!" );
+                midi = midiAccess;  // store in the global (in real usage, would probably keep in an object instance)
+
+                listInputsAndOutputs(midi);
+
+                midi.onstatechange = handleStateChange;
+            }
+
+            function onMIDIFailure(msg) {
+                console.log( "Failed to get MIDI access - " + msg );
+            }
+
+            navigator.requestMIDIAccess( { sysex: true } ).then( onMIDISuccess, onMIDIFailure );
+
+        });
+
+    </script>
+</body>
+</html>

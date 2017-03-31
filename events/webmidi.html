@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Web MIDI Lab - Events</title>
+    <meta name="description" content="Test Web MIDI in your browser">
+    <meta name="author" content="francois.georgy@gmail.com">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="webmidi.min.js"></script>
+    <style>
+        .gray-box {
+            border:1px solid #aaa;
+            background-color:#f0f0f0;
+            padding:1rem;
+            margin:1rem;
+            text-align:left;
+        }
+        #events {
+            font-family: monospace;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+    <div id="events" class="gray-box"></div>
+    <script>
+
+        function log(msg) {
+            $("#events").prepend(msg + "\n");
+        }
+
+        function logWebMidiEvent(e) {
+            log("[" + e.timestamp.toFixed(3) + "] event:" + e.type + " id:" + e.id.substring(0,6) + "... man:" + e.manufacturer + " name:" + e.name + " in:" + e.input + " out:" + e.output);
+        }
+
+        $(function() {
+
+            WebMidi.enable(function (err) {
+
+                if (err) alert("WebMidi could not be enabled.", err);
+
+                console.log("web midi enabled");
+                log("web midi enabled");
+
+                WebMidi.inputs.map(i => log("input:" + i.name));
+                WebMidi.outputs.map(i => log("output:" + i.name));
+
+                WebMidi.addListener("connected", e => logWebMidiEvent(e));
+                WebMidi.addListener("disconnected", e => logWebMidiEvent(e));
+
+            });
+
+        });
+
+    </script>
+</body>
+</html>
