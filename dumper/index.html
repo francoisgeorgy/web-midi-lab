@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>midi dump</title>
+    <meta name="description" content="Web Midi Lab - Dumper">
+    <meta name="author" content="François Georgy">
+    <!-- link rel="stylesheet" href="css/styles.css?v=1.0" -->
+    <style>
+        span.changed {
+            background-color: red;
+        }
+        span.dim {
+            color: #aaa;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <!-- Thanks to https://github.com/cotejp/webmidi -->
+    <script src="webmidi.min.js"></script>
+</head>
+<script>
+
+    function log(msg){
+        $("#log").prepend("\n").prepend(msg);
+    }
+
+    String.prototype.padZero= function(len, c){
+        var s= '', c= c || '0', len= (len || 2)-this.length;
+        while(s.length<len) s+= c;
+        return s+this;
+    }
+
+    function toHexString(byteArray) {
+        return byteArray.map(function(byte) {
+            return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+        }).join(' ')
+    }
+    function toDecString(byteArray) {
+        return byteArray.map(function(byte) {
+            return ((byte & 0xFF).toString(10)).slice(-2);
+        }).join(' ')
+    }
+
+    /*
+        event Object
+            target          Input       The Input that triggered the event.
+            data            Uint8Array  The raw MIDI message as an array of 8 bit values.
+            receivedTime    Number      The time when the event occurred (in milliseconds since start).
+            timestamp       Uint        The timestamp when the event occurred (in milliseconds since the Unix Epoch).
+            channel         Uint        The channel where the event occurred (between 1 and 16).
+            type            String      The type of event that occurred.
+            controller      Object
+                number      Uint        The number of the controller.
+                name        String      The usual name or function of the controller.
+                value       Uint        The value received (between 0 and 127).
+    */
+    function midiEventForHuman(e) {
+        //console.log(e);
+
+        var msg = e.data;   // Uint8Array
+        //return toHexString(msg);
+
+        console.log(msg.byteLength);
+
+        console.log(msg[0], msg[1], msg[2]);
+
+        //console.log(toHexString(msg));
+        //console.log(toDecString(msg));
+
+        var dec = "";
+        var hex = "";
+        var bin = "";
+        for (var i=0; i<msg.byteLength; i++) {
+            dec = dec + msg[i].toString(10).padZero(3) + " ";
+            hex = hex + msg[i].toString(16).padZero(2) + " ";
+            bin = bin + msg[i].toString(2).padZero(8) + " ";
+        }
+
+        return dec.trim() + " - " + hex.trim() + " - " + bin.trim();
+    }
+
+    function dim(s) {
+        return s;   // on affiche seulement 7 bits, plus besoin de dimmer
+        //return '<span class="dim">' + s + '</span>';
+    }
+    function dim1(s) {
+        return dim(s.substr(0, 1)) + s.substr(1)
+        //return '<span class="dim">' + s.substr(0, 1) + '</span>' + s.substr(1);
+    }
+
+    var last_data = null;
+
+    function h(v) {
+        return v.toString(16).padZero(2);
+    }
+
+    function sysExForHuman(data) {
+        //console.log(data);
+        var EOL = '\n';
+        var s = '';
+        s = h(data[0]) + EOL;
+        s += h(data[1]) + ' ' + h(data[2]) + ' ' + h(data[3]) + ' ' + EOL;
+        k = 0;
+        for (var i=4; i<data.byteLength; i++) {
+            var changed = (last_data != null) && (data[i] != last_data[i]);
+            if (changed) s += '<span class="changed">';
+            s += h(data[i]) + ' ';
+            if (changed) s += '</span>';
+            k++;
+            if ((k % 8) == 0) {
+                s += ' ';
+            }
+            if ((k % 32) == 0) {
+                s += EOL;
+            }
+        }
+        last_data = data;
+        return s;
+    }
+
+    function b(v) {
+        return v.toString(2).padZero(7);    // 7 bits !!!
+    }
+
+    var changes = [];
+
+    function sysExForHumanBin(data) {
+        //console.log(data);
+        var EOL = '\n';
+        var s = '';
+        //skip the manufacturer ID
+        //s = b(data[0]) + ' ' + b(data[1]) + ' ' + b(data[2]) + ' ' + b(data[3]) + ' ' + EOL;
+        k = 0;
+        for (var i=4; i<data.byteLength-1; i++) {   // skip the last byte
+            var changed = (last_data != null) && (data[i] != last_data[i]);
+            if (changed) {
+                d0 = b(last_data[i]);
+                d1 = b(data[i]);
+                o = '';
+                for (var n=0; n<d1.length; n++) {
+                    if (d1.charAt(n) != d0.charAt(n)) {
+                        o += '<span class="changed">' + d1.charAt(n) + '</span>';
+                    } else {
+                        if (n==0) {
+                            o += dim(d1.charAt(n));
+                        } else {
+                            o += d1.charAt(n);
+                        }
+                    }
+                }
+                s += o + ' ';
+            } else {
+                s += dim1(b(data[i])) + ' ';
+            }
+            //if (changed) s += '<span class="changed">';
+            //s += b(data[i]) + ' ';
+            //if (changed) s += '</span>';
+            k++;
+            if ((k % 8) == 0) {
+                s += ' ';
+            }
+            if ((k % 16) == 0) {
+                s += EOL;
+            }
+        }
+        last_data = data;
+        return s;
+    }
+
+    $(document).ready(function() {
+
+        WebMidi.enable(function (err) {
+            if (err) {
+                console.log("WebMidi could not be enabled.", err);
+            } else {
+                console.log("WebMidi enabled.");
+            }
+
+            var input = WebMidi.getInputByName("Bass Station II");
+/*
+            input.on('controlchange', "all", function(e) {
+                console.log("CC: ", e);
+                log(midiEventForHuman(e));
+            });
+*/
+            input.on('sysex', "all", function(e) {
+                console.log("SysEx: ", e);
+                log(sysExForHumanBin(e.data));
+                log('');
+            });
+
+        }, true);   // pass true to enable sysex support
+
+        $('#clear').click(function(){$('#log').empty();});
+
+    });
+</script>
+<body>
+    <h2>web midi lab - sysex dumper</h2>
+    <hr />
+    <button id="clear" />clear</button>
+    <div id="log" style="font-family: Courier New, Courier, monospace; white-space: pre"></div>
+</body>
+</html>
