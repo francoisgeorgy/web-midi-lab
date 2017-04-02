@@ -9,12 +9,13 @@
     <script src="webmidi.min.js"></script>
     <style>
         .gray-box {
-            border:1px solid #aaa;
-            background-color:#f0f0f0;
-            padding:1rem;
-            margin:1rem;
-            text-align:left;
+            border: 1px solid #aaa;
+            background-color: #f0f0f0;
+            padding: 1rem;
+            margin: 1rem;
+            text-align: left;
         }
+        
         #events {
             font-family: monospace;
             white-space: pre;
@@ -24,32 +25,41 @@
 <body>
     <div id="events" class="gray-box"></div>
     <script>
-
         var midi = null;  // global MIDIAccess object
 
         function log(msg) {
             $("#events").prepend(msg + "\n");
         }
 
-        function listInputsAndOutputs( midiAccess ) {
+        function listInputsAndOutputs(midiAccess) {
             for (var entry of midiAccess.inputs) {
                 var input = entry[1];
-                log( "Input type:" + input.type + " id:" + input.id.substring(0,6) + "..." +
+                log("Input type:" + input.type + " id:" + input.id.substring(0, 6) + "..." +
                     " man:" + input.manufacturer + " name:" + input.name +
                     " ver:" + input.version);
             }
 
             for (var entry of midiAccess.outputs) {
                 var output = entry[1];
-                log( "Output type:" + output.type + " id:" + output.id.substring(0,6) + "..." +
+                log("Output type:" + output.type + " id:" + output.id.substring(0, 6) + "..." +
                     " man:" + output.manufacturer + " name:" + output.name +
                     " ver:" + output.version);
             }
         }
 
+        function subscribeEverything(midiAccess) {
+            var inputs = midiAccess.inputs.values();
+            // loop over all available inputs and listen for any MIDI input
+            for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
+                // each time there is a midi message call the onMIDIMessage function
+                input.value.onmidimessage = handleMessage;
+            }
+        }
+
         function logMidiEvent(e) {
-            log("[" + e.timeStamp.toFixed(3) + "] event:" + e.type + " id:" + e.port.id.substring(0,6) + "..." +
-                " man:" + e.port.manufacturer + " name:" + e.port.name + " state:" + e.port.state + " in:" + e.port);
+            log(e.type + ": " + e.data);
+            //log("[" + e.timeStamp.toFixed(3) + "] event:" + e.type + " id:" + e.port.id.substring(0, 6) + "..." +
+            //    " man:" + e.port.manufacturer + " name:" + e.port.name + " state:" + e.port.state + " in:" + e.port);
             //log(e)
         }
 
@@ -96,25 +106,20 @@
 
         }
 
-        $(function() {
-
-            function onMIDISuccess( midiAccess ) {
-                console.log( "MIDI ready!" );
-                midi = midiAccess;  // store in the global (in real usage, would probably keep in an object instance)
-
+        $(function () {
+            function onMIDISuccess(midiAccess) {
+                midi = midiAccess;
                 listInputsAndOutputs(midi);
-
                 midi.onstatechange = handleStateChange;
+                subscribeEverything(midi);
             }
 
             function onMIDIFailure(msg) {
-                console.log( "Failed to get MIDI access - " + msg );
+                console.log("Failed to get MIDI access - " + msg);
             }
 
-            navigator.requestMIDIAccess( { sysex: true } ).then( onMIDISuccess, onMIDIFailure );
-
+            navigator.requestMIDIAccess({ sysex: true }).then(onMIDISuccess, onMIDIFailure);
         });
-
     </script>
 </body>
 </html>
