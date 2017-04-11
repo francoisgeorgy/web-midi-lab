@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Web MIDI Lab - Events</title>
+    <meta name="description" content="Test Web MIDI in your browser">
+    <meta name="author" content="francois.georgy@gmail.com">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <style>
+        .wrapper {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .wrapped-left {
+            flex:0;
+        }
+        .wrapped-right {
+            flex:1;
+            margin-left: 50px;
+        }
+        span.changed {
+            background-color: red;
+        }
+        span.dim {
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>web midi lab - sysex</h2>
+    <hr />
+    <button id="clear" />clear</button>
+    <div id="data" style="font-family: Courier New, Courier, monospace; white-space: pre"></div>
+
+    <script>
+        const SYSEX_MSG = 0b11110000;
+
+        var midi = null;  // global MIDIAccess object
+
+        var prev_data = null;
+
+        const COLS = 16;
+        const EOL = '\n';
+
+        String.prototype.padZero = function (len, c) {
+            var s = '', c = c || '0', len = (len || 2) - this.length;
+            while (s.length < len) s += c;
+            return s + this;
+        }
+
+        function dim(s) {
+            return s;   // on affiche seulement 7 bits, plus besoin de dimmer
+            //return '<span class="dim">' + s + '</span>';
+        }
+
+        function dim1(s) {
+            return dim(s.substr(0, 1)) + s.substr(1)
+            //return '<span class="dim">' + s.substr(0, 1) + '</span>' + s.substr(1);
+        }
+
+        function b(v) {
+            return v.toString(2).padZero(7);    // 7 bits !!!
+        }
+
+        function h(v) {
+            return v.toString(16).padZero(2);    
+        }
+
+        function getBinRepr(data, ref_data = null) {
+            var s = '    ';
+            row = 0;
+            for (var i = 0; i < 8; i++) {
+                s += `<span class="dim">      ${i} </span>`;
+            }
+            s += EOL;
+
+            var k = 0;
+            for (var i = 1; i < data.byteLength-1; i++) {
+
+                if ((k % 8) == 0) {
+                    s += '<span class="dim">' + k.toString(16).padZero(3) + '</span> ';
+                }
+
+                var changed = (ref_data != null) && (data[i] != ref_data[i]);
+                if (changed) {
+                    d0 = b(ref_data[i]);
+                    d1 = b(data[i]);
+                    o = '';
+                    for (var n = 0; n < d1.length; n++) {
+                        if (d1.charAt(n) != d0.charAt(n)) {
+                            o += '<span class="changed">' + d1.charAt(n) + '</span>';
+                        } else {
+                            if (n == 0) {
+                                o += dim(d1.charAt(n));
+                            } else {
+                                o += d1.charAt(n);
+                            }
+                        }
+                    }
+                    s += o + ' ';
+                } else {
+                    s += dim1(b(data[i])) + ' ';
+                }
+                k++;
+                if ((k % 8) == 0) {
+                    s += EOL;
+                }
+            }
+            return s;
+        }
+
+        function getHexRepr(data, ref_data = null) {
+/*
+            var s = '    ';
+            row = 0;
+            for (var i = 0; i < 8; i++) {
+                s += `      ${i} `;
+            }
+            s += EOL;
+*/
+            //var s = '';            
+
+
+            var s = '    ';
+            row = 0;
+            for (var i = 0; i < 8; i++) {
+                s += ` <span class="dim">${i}</span> `;
+            }
+            s += EOL;
+
+            var k = 0;
+            for (var i = 1; i < data.byteLength-1; i++) {
+
+                if ((k % 8) == 0) {
+                    s += '<span class="dim">' + k.toString(16).padZero(3) + '</span> ';
+                }
+
+                var changed = (ref_data != null) && (data[i] != ref_data[i]);
+
+                if (changed) {
+                    d0 = h(ref_data[i]);
+                    d1 = h(data[i]);
+                    o = '';
+                    for (var n = 0; n < d1.length; n++) {
+                        if (d1.charAt(n) != d0.charAt(n)) {
+                            o += '<span class="changed">' + d1.charAt(n) + '</span>';
+                        } else {
+                            if (n == 0) {
+                                o += dim(d1.charAt(n));
+                            } else {
+                                o += d1.charAt(n);
+                            }
+                        }
+                    }
+                    s += o + ' ';
+                } else {
+                    s += dim1(h(data[i])) + ' ';
+                }
+/*
+                if (changed) s += '<span class="changed">';
+                s += h(data[i]) + ' ';
+                if (changed) s += '</span>';
+*/                
+                k++;
+                if ((k % 8) == 0) {
+                    s += EOL;
+                }
+               
+            }
+            return s;
+        }
+
+        function handleMessage(event) {
+            //console.log("handleMessage", event);
+            if (event instanceof MIDIMessageEvent) {
+                var bytes = event.data;
+                if (bytes[0] == SYSEX_MSG) {
+                    console.log("sysex", bytes)
+                    //$("#data").prepend("\n").prepend(getBinRepr(bytes, prev_data));
+                    //$("#data").prepend("\n").prepend(getHexRepr(bytes, prev_data));
+                    var bin_repr = getBinRepr(bytes, prev_data);
+                    var hex_repr = getHexRepr(bytes, prev_data);                
+                    $("#data").prepend(`<div class="wrapper"><div class="wrapped-left">${bin_repr}</div><div class="wrapped-right">${hex_repr}</div></div>`);
+                    prev_data = bytes;
+                }
+            }
+        }
+
+        function subscribeInputs(midiAccess) {
+            var inputs = midiAccess.inputs.values();
+            // loop over all available inputs
+            for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
+                input.value.onmidimessage = handleMessage;
+            }
+        }
+
+        $(function () {
+
+            navigator.requestMIDIAccess({ sysex: true }).then(onMIDISuccess, onMIDIFailure);
+
+            function onMIDISuccess(midiAccess) {
+                console.log("Got access to MIDI");
+                midi = midiAccess;
+                subscribeInputs(midi);
+            }
+
+            function onMIDIFailure(msg) {
+                console.log("onMIDIFailure", msg);
+                //printr("Failed to get MIDI access - " + msg, "#states");
+            }
+
+            $('#clear').click(function () { $('#data').empty(); });
+
+        });
+    </script>
+</body>
+</html>
