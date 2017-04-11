@@ -14,12 +14,16 @@
         .wrapped-left {
             flex:0;
         }
-        .wrapped-right {
+        .wrapped-middle {
             flex:1;
             margin-left: 50px;
         }
+        .wrapped-right {
+            flex:2;
+            margin-left: 50px;
+        }
         span.changed {
-            background-color: red;
+            background-color: #00ccff;
         }
         span.dim {
             color: #aaa;
@@ -42,6 +46,12 @@
 
         const COLS = 16;
         const EOL = '\n';
+
+        /*
+        function propagateRight1(v) {
+            return v == 0 ? 0 : (v | (v-1));
+        }
+        */
 
         String.prototype.padZero = function (len, c) {
             var s = '', c = c || '0', len = (len || 2) - this.length;
@@ -67,6 +77,12 @@
             return v.toString(16).padZero(2);    
         }
 
+        function hex(a, prefix='', separator=' ') {
+            //if (a.length < 1) return '';
+            var s = a.reduce((acc, val) => {return acc + separator + prefix + h(val)}, "");
+            return s.trim();
+        }
+
         function getBinRepr(data, ref_data = null) {
             var s = '    ';
             row = 0;
@@ -76,10 +92,10 @@
             s += EOL;
 
             var k = 0;
-            for (var i = 1; i < data.byteLength-1; i++) {
+            for (var i=0; i < data.byteLength; i++) {
 
                 if ((k % 8) == 0) {
-                    s += '<span class="dim">' + k.toString(16).padZero(3) + '</span> ';
+                    s += '<span class="dim">' + k.toString(10).padZero(3) + '</span> ';
                 }
 
                 var changed = (ref_data != null) && (data[i] != ref_data[i]);
@@ -111,16 +127,6 @@
         }
 
         function getHexRepr(data, ref_data = null) {
-/*
-            var s = '    ';
-            row = 0;
-            for (var i = 0; i < 8; i++) {
-                s += `      ${i} `;
-            }
-            s += EOL;
-*/
-            //var s = '';            
-
 
             var s = '    ';
             row = 0;
@@ -130,10 +136,10 @@
             s += EOL;
 
             var k = 0;
-            for (var i = 1; i < data.byteLength-1; i++) {
+            for (var i = 0; i < data.byteLength; i++) {
 
                 if ((k % 8) == 0) {
-                    s += '<span class="dim">' + k.toString(16).padZero(3) + '</span> ';
+                    s += '<span class="dim">' + k.toString(10).padZero(3) + '</span> ';
                 }
 
                 var changed = (ref_data != null) && (data[i] != ref_data[i]);
@@ -157,11 +163,7 @@
                 } else {
                     s += dim1(h(data[i])) + ' ';
                 }
-/*
-                if (changed) s += '<span class="changed">';
-                s += h(data[i]) + ' ';
-                if (changed) s += '</span>';
-*/                
+
                 k++;
                 if ((k % 8) == 0) {
                     s += EOL;
@@ -171,17 +173,54 @@
             return s;
         }
 
+        function getFirstDiff(a, b) {
+            var start = -1;
+            var length = 0; // length == 0 means no diff found.
+            var mask = [];
+            if ((typeof b === 'undefined') || (b == null)) {
+                return { start, length, mask: mask };
+            }
+            for (var i=0; i<Math.min(a.byteLength, b.byteLength); i++) {
+                if (a[i] == b[i]) {
+                    if (start < 0) {
+                        continue; 
+                    } else { 
+                        return { start, length, mask: mask };
+                    }
+                }
+                if (start < 0) {
+                    start = i;
+                }
+                mask.push(a[i] ^ b[i]);
+                length++;
+            }
+            return { start, length, mask: mask };
+        }
+
         function handleMessage(event) {
             //console.log("handleMessage", event);
             if (event instanceof MIDIMessageEvent) {
-                var bytes = event.data;
-                if (bytes[0] == SYSEX_MSG) {
-                    console.log("sysex", bytes)
-                    //$("#data").prepend("\n").prepend(getBinRepr(bytes, prev_data));
-                    //$("#data").prepend("\n").prepend(getHexRepr(bytes, prev_data));
+                //var bytes = event.data;
+                //console.log("data", event.data)
+                if (event.data[0] == SYSEX_MSG) {
+                
+                    var bytes = event.data.slice(1, -1);
+                
+                    //console.log("sysex", bytes)
+                 
+
                     var bin_repr = getBinRepr(bytes, prev_data);
                     var hex_repr = getHexRepr(bytes, prev_data);                
-                    $("#data").prepend(`<div class="wrapper"><div class="wrapped-left">${bin_repr}</div><div class="wrapped-right">${hex_repr}</div></div>`);
+                    var diff = getFirstDiff(bytes, prev_data);
+                    //console.log(diff);
+
+                    var masks_bin = diff.mask.reduce((acc, val) => {return acc + '\n' + val.toString(2).padZero(8)}, "");
+                    //console.log(masks_bin); 
+
+                    var mask = hex(diff.mask, '0x');
+                    var diff_repr = `\nstart:  ${diff.start}\nlength: ${diff.length}\nmask:   [${mask}]\n\n${diff.start}, ${diff.length}, [${hex(diff.mask, '0x')}]\n${masks_bin}`;
+                    
+                    $("#data").prepend(`<div class="wrapper"><div class="wrapped-left">${bin_repr}</div><div class="wrapped-middle">${hex_repr}</div><div class="wrapped-right">${diff_repr}</div></div>`);
                     prev_data = bytes;
                 }
             }
