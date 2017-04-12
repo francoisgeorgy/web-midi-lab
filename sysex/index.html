@@ -7,6 +7,9 @@
     <meta name="author" content="francois.georgy@gmail.com">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <style>
+        #data {
+            font-family: Courier New, Courier, monospace;
+        }
         .wrapper {
             display: flex;
             margin-bottom: 20px;
@@ -22,6 +25,12 @@
             flex:2;
             margin-left: 50px;
         }
+        .wrapped-right > div {
+            margin-bottom: 1em;
+        }
+        .dump, .code {
+            white-space: pre;
+        }
         span.highlight {
             background-color: #00ccff;
         }
@@ -35,7 +44,7 @@
     <h2>web midi lab - sysex</h2>
     <hr />
     <button id="clear" />clear</button>
-    <div id="data" style="font-family: Courier New, Courier, monospace; white-space: pre"></div>
+    <div id="data"></div>
 
     <script>
         const SYSEX_START = 0xF0;
@@ -113,7 +122,7 @@
                 if (data[i] == SYSEX_START) {
                     s += '-START- ';
                 } else if (data[i] == SYSEX_END) {
-                    s += '-END--- ';
+                    s += '--END-- ';
                 } else {
                     var changed = (ref_data != null) && (data[i] != ref_data[i]);
                     if (changed) {
@@ -225,22 +234,24 @@
 
                     let bin_repr = getBinRepr(bytes, prev_data);
                     let hex_repr = getHexRepr(bytes, prev_data);
+
                     let diff = getFirstDiff(bytes, prev_data);
-                    let diff_repr = `start:  ${diff.start}\nlength: ${diff.length}\nmask:   [${masks_hex}]`;
+                    let diff_repr = `offset: ${diff.start}<br />length: ${diff.length}`;
 
                     let masks_bin = bin(diff.mask, '0b');
                     let masks_hex = hex(diff.mask, '0x');
-                    let masks_repr = `${masks_hex}\n${masks_bin}`;
-                    let js_repr = `{\n    offset: 0,\n    bytes: 0,\n    masks: [0b0],\n    shift: 0,\n    range: [0, 0],\n    description: ""\n}`;
+                    let masks_repr = `${masks_hex}<br />${masks_bin}`;
+
+                    let js_repr = `{\n    offset: ${diff.start},\n    bytes: ${diff.length},\n    masks: [${masks_hex.replace(/ /g, ',')}],\n    shift: 0,\n    range: [0, 0],\n    description: ""\n}`;
 
                     $("#data").prepend(
                         `<div class="wrapper">
-                            <div class="wrapped-left">${bin_repr}</div>
-                            <div class="wrapped-middle">${hex_repr}</div>
+                            <div class="wrapped-left dump">${bin_repr}</div>
+                            <div class="wrapped-middle dump">${hex_repr}</div>
                             <div class="wrapped-right">
                                 <div>${diff_repr}</div>
                                 <div>${masks_repr}</div>
-                                <div>${js_repr}</div>
+                                <div class="code">${js_repr}</div>
                             </div>
                         </div>`);
 
