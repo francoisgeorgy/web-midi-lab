@@ -70,16 +70,24 @@
         }
 
         function b(v) {
+            return v.toString(2).padZero(8);
+        }
+
+        function b7(v) {
             return v.toString(2).padZero(7);    // 7 bits !!!
         }
 
         function h(v) {
-            return v.toString(16).padZero(2);    
+            return v.toString(16).toUpperCase().padZero(2);
         }
 
         function hex(a, prefix='', separator=' ') {
-            //if (a.length < 1) return '';
             var s = a.reduce((acc, val) => {return acc + separator + prefix + h(val)}, "");
+            return s.trim();
+        }
+
+        function bin(a, prefix='', separator=' ') {
+            var s = a.reduce((acc, val) => {return acc + separator + prefix + b(val)}, "");
             return s.trim();
         }
 
@@ -100,8 +108,8 @@
 
                 var changed = (ref_data != null) && (data[i] != ref_data[i]);
                 if (changed) {
-                    d0 = b(ref_data[i]);
-                    d1 = b(data[i]);
+                    d0 = b7(ref_data[i]);
+                    d1 = b7(data[i]);
                     o = '';
                     for (var n = 0; n < d1.length; n++) {
                         if (d1.charAt(n) != d0.charAt(n)) {
@@ -116,7 +124,7 @@
                     }
                     s += o + ' ';
                 } else {
-                    s += dim1(b(data[i])) + ' ';
+                    s += dim1(b7(data[i])) + ' ';
                 }
                 k++;
                 if ((k % 8) == 0) {
@@ -197,30 +205,38 @@
             return { start, length, mask: mask };
         }
 
+        function getShift(diff) {
+            return null;
+        }
+
+        function getRange(diff) {
+            return null;
+        }
+
         function handleMessage(event) {
             //console.log("handleMessage", event);
             if (event instanceof MIDIMessageEvent) {
                 //var bytes = event.data;
                 //console.log("data", event.data)
                 if (event.data[0] == SYSEX_MSG) {
-                
+
                     var bytes = event.data.slice(1, -1);
                 
                     //console.log("sysex", bytes)
                  
 
-                    var bin_repr = getBinRepr(bytes, prev_data);
-                    var hex_repr = getHexRepr(bytes, prev_data);                
-                    var diff = getFirstDiff(bytes, prev_data);
-                    //console.log(diff);
+                    let bin_repr = getBinRepr(bytes, prev_data);
+                    let hex_repr = getHexRepr(bytes, prev_data);
+                    let diff = getFirstDiff(bytes, prev_data);
+                    let diff_repr = `start:  ${diff.start}\nlength: ${diff.length}\nmask:   [${masks_hex}]`;
 
-                    var masks_bin = diff.mask.reduce((acc, val) => {return acc + '\n' + val.toString(2).padZero(8)}, "");
-                    //console.log(masks_bin); 
+                    let masks_bin = bin(diff.mask, '0b');
+                    let masks_hex = hex(diff.mask, '0x');
+                    let masks_repr = `${masks_hex}\n${masks_bin}`;
 
-                    var mask = hex(diff.mask, '0x');
-                    var diff_repr = `\nstart:  ${diff.start}\nlength: ${diff.length}\nmask:   [${mask}]\n\n${diff.start}, ${diff.length}, [${hex(diff.mask, '0x')}]\n${masks_bin}`;
-                    
-                    $("#data").prepend(`<div class="wrapper"><div class="wrapped-left">${bin_repr}</div><div class="wrapped-middle">${hex_repr}</div><div class="wrapped-right">${diff_repr}</div></div>`);
+                    let js_repr = `{\n    offset: 0,\n    bytes: 0,\n    masks: [0b0],\n    shift: 0,\n    range: [0, 0],\n    description: ""\n}`;
+
+                    $("#data").prepend(`<div class="wrapper"><div class="wrapped-left">${bin_repr}</div><div class="wrapped-middle">${hex_repr}</div><div class="wrapped-right"><div>${diff_repr}</div><div>${masks_repr}</div><div>${js_repr}</div></div></div>`);
                     prev_data = bytes;
                 }
             }
