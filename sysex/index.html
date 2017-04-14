@@ -242,7 +242,7 @@
                     let masks_hex = hex(diff.mask, '0x');
                     let masks_repr = `${masks_hex}<br />${masks_bin}`;
 
-                    let js_repr = `{\n    offset: ${diff.start},\n    bytes: ${diff.length},\n    masks: [${masks_hex.replace(/ /g, ',')}],\n    shift: 0,\n    range: [0, 0],\n    description: ""\n}`;
+                    let js_repr = `{\n    id: 0,\n    offset: ${diff.start},\n    masks: [${masks_hex.replace(/ /g, ',')}],\n    range: [0, 0],\n    description: ""\n}`;
 
                     $("#data").prepend(
                         `<div class="wrapper">
