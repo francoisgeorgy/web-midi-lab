@@ -28,13 +28,14 @@
         var s= '', c= c || '0', len= (len || 2)-this.length;
         while(s.length<len) s+= c;
         return s+this;
-    }
+    };
 
     function toHexString(byteArray) {
         return byteArray.map(function(byte) {
             return ('0' + (byte & 0xFF).toString(16)).slice(-2);
         }).join(' ')
     }
+
     function toDecString(byteArray) {
         return byteArray.map(function(byte) {
             return ((byte & 0xFF).toString(10)).slice(-2);
@@ -163,8 +164,33 @@
                 s += EOL;
             }
         }
-        last_data = data;
         return s;
+    }
+
+    /**
+     * Load sysex data from local storage
+     */
+    function loadSysEx() {
+    }
+
+    /**
+     * Save sysex data in local storage
+     */
+    function saveSysEx(data) {
+        Storages.localStorage.set('web-midi-lab.sysex', data);
+        alert('sysex data saved in local storage');
+    }
+
+    /**
+     * Import sysex data from file
+     */
+    function importSysEx() {
+    }
+
+    /**
+     * Export sysex data to file
+     */
+    function exportSysEx() {
     }
 
     $(document).ready(function() {
@@ -186,19 +212,28 @@
             input.on('sysex', "all", function(e) {
                 console.log("SysEx: ", e);
                 log(sysExForHumanBin(e.data));
+                last_data = e.data;
                 log('');
             });
 
         }, true);   // pass true to enable sysex support
 
         $('#clear').click(function(){$('#log').empty();});
+        $('#load').click(loadSysEx(last_data));
+        $('#save').click(saveSysEx());
+        $('#import').click(importSysEx());
+        $('#export').click(exportSysEx());
 
     });
 </script>
 <body>
     <h2>web midi lab - sysex dumper</h2>
     <hr />
-    <button id="clear" />clear</button>
+    <button id="clear" />clear display</button>
+    <button id="load" />load</button>
+    <button id="save" />save</button>
+    <button id="import" />import</button>
+    <button id="export" />export</button>
     <div id="log" style="font-family: Courier New, Courier, monospace; white-space: pre"></div>
 </body>
 </html>

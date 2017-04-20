@@ -9,6 +9,7 @@ https://webaudio.github.io/web-midi-api/
 ## Libs
 
 - WebMidi.js: https://github.com/cotejp/webmidi
+- JS Storage: https://github.com/julien-maurel/js-storage
 
 ## UI components
 
@@ -35,6 +36,8 @@ https://webaudio.github.io/web-midi-api/
 
 - http://outputchannel.com/midi-logger/
 - ~~https://github.com/notthetup/midimessage~~
+
+
 
 ## Dev ideas
 

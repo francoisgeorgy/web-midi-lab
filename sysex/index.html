@@ -6,6 +6,7 @@
     <meta name="description" content="Test Web MIDI in your browser">
     <meta name="author" content="francois.georgy@gmail.com">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="js.storage.min.js"></script>
     <style>
         #data {
             font-family: Courier New, Courier, monospace;
@@ -44,6 +45,10 @@
     <h2>web midi lab - sysex</h2>
     <hr />
     <button id="clear" />clear</button>
+    <button id="load" />load</button>
+    <button id="save" />save</button>
+    <button id="import" />import</button>
+    <button id="export" />export</button>
     <div id="data"></div>
 
     <script>
@@ -223,29 +228,22 @@
             return null;
         }
 
-        function handleMessage(event) {
-            //console.log("handleMessage", event);
+        function displaySysEx(bytes) {
 
-            if (event instanceof MIDIMessageEvent) {
-                if (event.data[0] == SYSEX_START) {
+            let bin_repr = getBinRepr(bytes, prev_data);
+            let hex_repr = getHexRepr(bytes, prev_data);
 
-                    //var bytes = event.data.slice(1, -1);
-                    let bytes = event.data;
+            let diff = getFirstDiff(bytes, prev_data);
+            let diff_repr = `offset: ${diff.start}<br />length: ${diff.length}`;
 
-                    let bin_repr = getBinRepr(bytes, prev_data);
-                    let hex_repr = getHexRepr(bytes, prev_data);
+            let masks_bin = bin(diff.mask, '0b');
+            let masks_hex = hex(diff.mask, '0x');
+            let masks_repr = `${masks_hex}<br />${masks_bin}`;
 
-                    let diff = getFirstDiff(bytes, prev_data);
-                    let diff_repr = `offset: ${diff.start}<br />length: ${diff.length}`;
+            let js_repr = `offset: ${diff.start},\nmask: [${masks_hex.replace(/ /g, ',')}]`;
 
-                    let masks_bin = bin(diff.mask, '0b');
-                    let masks_hex = hex(diff.mask, '0x');
-                    let masks_repr = `${masks_hex}<br />${masks_bin}`;
-
-                    let js_repr = `offset: ${diff.start},\nmask: [${masks_hex.replace(/ /g, ',')}]`;
-
-                    $("#data").prepend(
-                        `<div class="wrapper">
+            $("#data").prepend(
+                `<div class="wrapper">
                             <div class="wrapped-left dump">${bin_repr}</div>
                             <div class="wrapped-middle dump">${hex_repr}</div>
                             <div class="wrapped-right">
@@ -255,9 +253,49 @@
                             </div>
                         </div>`);
 
-                    prev_data = bytes;
+        }
+
+        function handleMessage(event) {
+            //console.log("handleMessage", event);
+
+            if (event instanceof MIDIMessageEvent) {
+                if (event.data[0] == SYSEX_START) {
+                    displaySysEx(event.data);
+                    prev_data = event.data;
                 }
             }
+        }
+
+        /**
+         * Load sysex data from local storage
+         */
+        function loadSysEx() {
+            let data = JSON.parse(Storages.localStorage.get('web-midi-lab.data.sysex'));
+            displaySysEx(data);
+            console.log('data loaded from local storage', data);
+            prev_data = data;
+        }
+
+        /**
+         * Save sysex data in local storage
+         */
+        function saveSysEx(data) {
+//            console.log('saving...', data);
+            Storages.localStorage.set('web-midi-lab.data.sysex', JSON.stringify(data));
+            console.log('sysex data saved in local storage');
+        }
+
+        /**
+         * Import sysex data from file
+         */
+        function importSysEx() {
+
+        }
+
+        /**
+         * Export sysex data to file
+         */
+        function exportSysEx() {
         }
 
         function subscribeInputs(midiAccess) {
@@ -284,6 +322,12 @@
             }
 
             $('#clear').click(function () { $('#data').empty(); });
+            $('#load').click(loadSysEx);
+            $('#save').click(() => saveSysEx(prev_data));
+            $('#import').click(() => importSysEx());
+            $('#export').click(exportSysEx);
+
+            console.log('storage keys', Storages.localStorage.keys());
 
         });
     </script>
