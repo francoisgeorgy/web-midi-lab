@@ -44,5 +44,6 @@ https://webaudio.github.io/web-midi-api/
 - Events dumper
 - Events filter (midi-in --> filter --> midi-out)
 - Events modifier (midi-in --> modify/filter --> midi-out)
-- SysEx tool
+- Router (CC xx --> CC yy, CC <--> NRPN, ...)
+- SysEx tools
 - Send events
