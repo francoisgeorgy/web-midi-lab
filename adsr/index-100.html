@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <!-- based on code from http://www.earlevel.com/main/2013/06/23/envelope-generators-adsr-widget/ -->
+    <meta charset="UTF-8"/>
+    <title>ADSR graph 300x100</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script type="text/javascript" src="ADSR.js"></script>
+    <!--<script type="text/javascript" src="drawADSR.js"></script>-->
+    <script type="text/javascript" src="flotr2.min.js"></script>
+    <style type="text/css">
+        table#controls {
+            background: transparent;
+            border: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        table#controls td {
+            border: none;
+            white-space: nowrap;
+        }
+    </style>
+    <script>
+
+        const WIDTH = 300;
+        const HEIGHT = 100;
+
+        var envADSR;
+
+
+
+        function drawAllADSR() {
+
+            console.log('drawAllADSR', $("#attackSlider").value, $("#attackSlider").val());
+
+            envADSR.setAttackRate($("#attackSlider").val());
+            envADSR.setDecayRate($("#decaySlider").val());
+            envADSR.setSustainLevel($("#sustainSlider").val() / HEIGHT);
+            envADSR.setReleaseRate($("#releaseSlider").val());
+            envADSR.setTargetRatioA(0.001 * (Math.exp(12.0 * $("#ratioASlider").val() / HEIGHT) - 1.0));
+            envADSR.setTargetRatioDR(0.001 * (Math.exp(12.0 * $("#ratioDRSlider").val() / HEIGHT) - 1.0));
+            drawADSR();
+        }
+
+        function drawADSR() {
+            console.log('drawADSR');
+//            var val;
+            var envPlot = [];
+            envADSR.reset();
+            envADSR.gate(1);
+            envPlot.push([0, 0]);
+
+            let gate_at = 100 - envADSR.gateAt();
+            console.log('gate at', gate_at);
+
+            var idx;
+            for (idx = 1; idx < gate_at; idx++) {
+                envPlot.push([idx, envADSR.process()]);
+            }
+            envADSR.gate(0);
+            for (idx = gate_at; idx < 100; idx++) {
+                envPlot.push([idx, envADSR.process()]);
+            }
+//            for (idx = 1; idx < (WIDTH*2/3); idx++) {
+//                envPlot.push([idx * 100 / WIDTH, envADSR.process()]);
+//            }
+//            envADSR.gate(0);
+//            for (idx = (WIDTH*2/3); idx < WIDTH; idx++) {
+//                envPlot.push([idx * 100 / WIDTH, envADSR.process()]);
+//            }
+
+            Flotr.draw(document.getElementById('adsr-container'), [envPlot], {
+                xaxis: {
+                    showLabels: true,
+                    ticks: [0,25,50,75,100]
+                },
+                yaxis: {
+                    showLabels: false,
+                    max: 1.0,
+                    min: 0
+                }
+            });
+        }
+
+        jQuery(document).ready(function ($) {
+            envADSR = new ADSR;
+//            $("#ratioASlider").val(Math.log(0.5 * 1000 + 1) * (HEIGHT*1.0) / 12.0);
+//            $("#ratioDRSlider").val(Math.log(0.0001 * 1000 + 1) * (HEIGHT*1.0) / 12.0);
+            $("#ratioASlider").val(Math.log(12 * 1000 + 1) * (HEIGHT*1.0) / 12.0);
+            $("#ratioDRSlider").val(Math.log(12 * 1000 + 1) * (HEIGHT*1.0) / 12.0);
+            drawAllADSR();
+        });
+
+    </script>
+</head>
+<body>
+    <div id="adsr-container" style="width:300px; height:100px; position: relative;">
+        <canvas class="flotr-canvas" width="300" height="100" style="position: absolute; left: 0px; top: 0px; width: 300px; height: 100px;"></canvas>
+        <canvas class="flotr-overlay" width="300" height="100" style="position: absolute; left: 0px; top: 0px; width: 300px; height: 100px;"></canvas>
+    </div>
+    <table id="controls">
+        <tr>
+            <td>
+                <input type="range" min="0" max="50" value="25" name="attackSlider" id="attackSlider" title="attack slider"
+                       onchange='envADSR.setAttackRate(value); drawADSR();'
+                       oninput='envADSR.setAttackRate(value); drawADSR();'> Attack
+                <br/>
+                <input type="range" min="0" max="100" value="25" name="decaySlider" id="decaySlider" title="decay slider"
+                       onchange='envADSR.setDecayRate(value); drawADSR();'
+                       oninput='envADSR.setDecayRate(value); drawADSR();'> Decay
+                <br/>
+                <input type="range" min="0" max="100" value="60" name="sustainSlider" id="sustainSlider" title="sustain slider"
+                       onchange='envADSR.setSustainLevel(value/100); drawADSR();'
+                       oninput='envADSR.setSustainLevel(value/100); drawADSR();'> Sustain
+                <br/>
+                <input type="range" min="0" max="50" value="25" name="releaseSlider" id="releaseSlider" title="release slider"
+                       onchange='envADSR.setReleaseRate(value); drawADSR();'
+                       oninput='envADSR.setReleaseRate(value); drawADSR();'> Release
+            </td>
+            <td>
+                <input type="range" min="0" max="100" value="100" name="ratioASlider" id="ratioASlider" title="ratio A slider"
+                       onchange='envADSR.setTargetRatioA(0.001 * (Math.exp(12.0*value/100)-1.0)); drawADSR();'
+                       oninput='envADSR.setTargetRatioA(0.001 * (Math.exp(12.0*value/100)-1.0)); drawADSR();'> Attack Curve
+                <br/>
+                <input type="range" min="0" max="100" value="100" name="ratioDRSlider" id="ratioDRSlider" title="ratio DR slider"
+                       onchange='envADSR.setTargetRatioDR(0.001 * (Math.exp(12.0*value/100)-1.0)); drawADSR();'
+                       oninput='envADSR.setTargetRatioDR(0.001 * (Math.exp(12.0*value/100)-1.0)); drawADSR();'> Decay/Release Curve
+            </td>
+    </table>
+</body>
+</html>

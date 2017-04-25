@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <!-- based on code from http://www.earlevel.com/main/2013/06/23/envelope-generators-adsr-widget/ -->
+    <meta charset="UTF-8"/>
+    <title>ADSR graph</title>
+    <script type="text/javascript" src="ADSR.js"></script>
+    <script type="text/javascript" src="drawADSR.js"></script>
+    <script type="text/javascript" src="flotr2.min.js"></script>
+    <style type="text/css">
+        table#controls {
+            background: transparent;
+            border: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        table#controls td {
+            border: none;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="adsr-container" style="width: 600px; height: 200px; position: relative;">
+        <canvas class="flotr-canvas" width="600" height="200" style="position: absolute; left: 0px; top: 0px; width: 600px; height: 200px;"></canvas>
+        <canvas class="flotr-overlay" width="600" height="200" style="position: absolute; left: 0px; top: 0px; width: 600px; height: 200px;"></canvas>
+        <!--<div style="position: absolute; top: -10000px;">-->
+            <!--<div style="font-size:smaller;" class="flotr-dummy-div">100</div>-->
+        <!--</div>-->
+        <!--<div style="position: absolute; top: -10000px;">-->
+            <!--<div style="font-size:smaller;" class="flotr-dummy-div">0.00</div>-->
+        <!--</div>-->
+        <div class="flotr-labels" style="font-size: smaller; color: rgb(84, 84, 84);">
+            <div style="position:absolute; text-align:center;top:175px;left:-20.7px;width:95px;">0</div>
+            <div style="position:absolute; text-align:center;top:175px;left:75px;width:95px;">100</div>
+            <div style="position:absolute; text-align:center;top:175px;left:170px;width:95px;">200</div>
+            <div style="position:absolute; text-align:center;top:175px;left:266px;width:95px">300</div>
+            <div style="position:absolute; text-align:center;top:175px;left:361px;width:95px">400</div>
+            <div style="position:absolute; text-align:center;top:175px;left:457px;width:95px">500</div>
+            <div style="position:absolute; text-align:right;top:160px;left:0px;width:24px">0.00</div>
+            <div style="position:absolute; text-align:right;top:126px;left:0px;width:24px">0.20</div>
+            <div style="position:absolute; text-align:right;top:92px;left:0px;width:24px">0.40</div>
+            <div style="position:absolute; text-align:right;top:57px;left:0px;width:24px">0.60</div>
+            <div style="position:absolute; text-align:right;top:23px;left:0px;width:24px">0.80</div>
+            <div style="position:absolute; text-align:right;top:-11px;left:0px;width:24px">1.00</div>
+        </div>
+        <div class="flotr-titles">
+            <div class="flotr-axis-title" style="font-weight:bold;"></div>
+        </div>
+    </div>
+    <table id="controls">
+        <tr>
+            <td>
+                <input type="range" min="0" max="200" value="100" name="attackSlider" id="attackSlider"
+                       title="attack slider" onchange='envADSR.setAttackRate(value); drawADSR();'
+                       oninput='envADSR.setAttackRate(value); drawADSR();'> Attack
+                <br/>
+                <input type="range" min="0" max="200" value="200" name="decaySlider" id="decaySlider"
+                       title="decay slider" onchange='envADSR.setDecayRate(value); drawADSR();'
+                       oninput='envADSR.setDecayRate(value); drawADSR();'> Decay
+                <br/>
+                <input type="range" min="0" max="200" value="120" name="sustainSlider" id="sustainSlider"
+                       title="sustain slider" onchange='envADSR.setSustainLevel(value/200); drawADSR();'
+                       oninput='envADSR.setSustainLevel(value/200); drawADSR();'> Sustain
+                <br/>
+                <input type="range" min="0" max="200" value="200" name="releaseSlider" id="releaseSlider"
+                       title="release slider" onchange='envADSR.setReleaseRate(value); drawADSR();'
+                       oninput='envADSR.setReleaseRate(value); drawADSR();'> Release
+            </td>
+            <td>
+                <input type="range" min="0" max="200" value="0" name="ratioASlider" id="ratioASlider"
+                       title="ratio A slider"
+                       onchange='envADSR.setTargetRatioA(0.001 * (Math.exp(12.0*value/200)-1.0)); drawADSR();'
+                       oninput='envADSR.setTargetRatioA(0.001 * (Math.exp(12.0*value/200)-1.0)); drawADSR();'> Attack
+                Curve
+                <br/>
+                <input type="range" min="0" max="200" value="0" name="ratioDRSlider" id="ratioDRSlider"
+                       title="ratio DR slider"
+                       onchange='envADSR.setTargetRatioDR(0.001 * (Math.exp(12.0*value/200)-1.0)); drawADSR();'
+                       oninput='envADSR.setTargetRatioDR(0.001 * (Math.exp(12.0*value/200)-1.0)); drawADSR();'>
+                Decay/Release Curve
+                <br/>
+                Plot:
+                <select name="PlotType" id="PlotType" onchange="drawAllADSR()">
+                    <option value="linear">linear</option>
+                    <option value="log">log</option>
+                </select>
+            </td>
+    </table>
+</body>
+</html>

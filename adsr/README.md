@@ -1,0 +1,5 @@
+- http://www.earlevel.com/main/2013/06/23/envelope-generators-adsr-widget/
+    - http://www.earlevel.com/main/2013/06/03/envelope-generators-adsr-code/
+- http://www.benfarrell.com/2011/12/17/the-adsr-envelope-with-audiolib-js/
+- https://joshondesign.com/p/demos/sound/adsrviz/
+- https://github.com/Tonejs/Tone.js/wiki/Envelope
