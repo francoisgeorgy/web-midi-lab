@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <!-- based on code from http://codepen.io/fgeorgy/pen/XRaOJL -->
+    <meta charset="UTF-8"/>
+    <title>ADSR</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <style type="text/css">
+        canvas {
+            /*border: solid 1px;*/
+            /*height: 300px;*/
+            /*width: 500px;*/
+            margin: 10px;
+            display: block;
+            background-color: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <script>
+
+        jQuery(document).ready(function ($) {
+
+//            var canvas = document.getElementById("myCanvas");
+//            var ctx = canvas.getContext("2d");
+
+            function draw(env, container_id) {
+
+                let canvas = document.getElementById(container_id);
+                let ctx = canvas.getContext("2d");
+
+                const width = canvas.width;
+                const height = canvas.height;
+
+                const width_A = 0.25;
+                const width_D = 0.25;
+                const width_R = 0.25;
+
+                // start position
+                let x = 0;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.beginPath();
+                ctx.moveTo(0, height); // start at lower left corner
+
+                // Attack
+                x += env.attack * width_A * width;
+                ctx.lineTo(x, 0);
+
+                // Decay
+                x += env.decay * width_D * width;
+                ctx.lineTo(x, height - env.sustain * height);
+
+                // Sustain
+                x = width - (env.release * width_R * width);
+                ctx.lineTo(x, height - env.sustain * height);
+
+                // Release
+                ctx.lineTo(width, height);
+
+                // stroke
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "#333";
+                ctx.stroke();
+                ctx.closePath();
+            }
+
+            draw( { attack: 1.0, decay: 1.0, sustain: 0.5, release: 1.0 }, "e1");
+            draw( { attack: 0.5, decay: 0.5, sustain: 0.5, release: 0.5 }, "e2");
+
+            draw( { attack: 0.1, decay: 1.0, sustain: 0.5, release: 1.0 }, "e3");
+            draw( { attack: 1.0, decay: 0.1, sustain: 0.5, release: 0.5 }, "e4");
+
+            draw( { attack: 0.0, decay: 0.5, sustain: 0.2, release: 0.5 }, "e5");
+            draw( { attack: 0.1, decay: 0.5, sustain: 0.5, release: 0.5 }, "e6");
+            draw( { attack: 0.5, decay: 0.5, sustain: 0.8, release: 0.5 }, "e7");
+            draw( { attack: 1.0, decay: 0.5, sustain: 1.0, release: 0.5 }, "e8");
+
+            draw( { attack: 0.0, decay: 0.0, sustain: 1.0, release: 0.0 }, "e9");
+            draw( { attack: 1.0, decay: 1.0, sustain: 1.0, release: 1.0 }, "e10");
+            draw( { attack: 1.0, decay: 0.0, sustain: 1.0, release: 0.0 }, "e11");
+            draw( { attack: 0.0, decay: 0.0, sustain: 1.0, release: 1.0 }, "e12");
+
+
+        });
+
+    </script>
+    <div id=master>
+        <div><canvas id="e1" height=150 width=250></canvas></div>
+        <div><canvas id="e2" height=150 width=250></canvas></div>
+        <div><canvas id="e3" height=80 width=100></canvas></div>
+        <div><canvas id="e4" height=80 width=100></canvas></div>
+        <div><canvas id="e5" height=60 width=80></canvas></div>
+        <div><canvas id="e6" height=60 width=80></canvas></div>
+        <div><canvas id="e7" height=60 width=80></canvas></div>
+        <div><canvas id="e8" height=60 width=80></canvas></div>
+        <div><canvas id="e9" height=60 width=80></canvas></div>
+        <div><canvas id="e10" height=60 width=80></canvas></div>
+        <div><canvas id="e11" height=60 width=80></canvas></div>
+        <div><canvas id="e12" height=60 width=80></canvas></div>
+    </div>
+</body>
+</html>
