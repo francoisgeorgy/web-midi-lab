@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Web MIDI Lab - Connect</title>
+    <meta name="description" content="Test Web MIDI in your browser">
+    <meta name="author" content="francois.georgy@gmail.com">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="webmidi.min.js"></script>
+    <style>
+        html {
+            font-family: sans-serif;
+        }
+        .col {
+            padding:1vw 0;
+        }
+        .gray-box {
+            border:1px solid #aaa;
+            background-color:#f0f0f0;
+            text-align:left;
+            padding:0.5vw;
+        }
+        #events, #cc {
+            font-family: monospace;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+    <div>Testing MIDI device connection, disconnection, reconnection &amp; MIDI channel change.</div>
+    <hr />
+    <div>MIDI channel:
+        <select id="midi-channel">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="all">All</option>
+        </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;grid-column-gap:1vw">
+        <div class="col">
+            Last events on top
+            <div id="events" class="gray-box"></div>
+        </div>
+        <div class="col">
+            Last events on top
+            <div id="cc" class="gray-box"></div>
+        </div>
+    </div>
+
+    <script>
+
+        String.prototype.padZero= function(len, c){
+            var s= '', c= c || '0', len= (len || 2)-this.length;
+            while(s.length<len) s+= c;
+            return s+this;
+        };
+
+        function log(msg) {
+            console.log(msg);
+            $("#events").prepend('[' + new Date().toISOString().slice(11, -1) + '] ' + msg + "\n");
+        }
+
+        function log_midi(msg) {
+            $("#events").prepend('[' + new Date().toISOString().slice(11, -1) + '] ' + `<span style="color:blue">${msg}</span>\n`);
+        }
+
+        function logWebMidiEvent(e, separator) {
+//            let sep = separator ? "\n" : "";
+            let sep = '';
+            console.log(e);
+            log_midi("[" + e.timestamp.toFixed(3) + "] event:" + e.type +
+                    " id:" + e.id.substring(0,6) + "... man:" + e.manufacturer +
+                    " name:<b>" + e.name + "</b> in:" + e.input + " out:" + e.output + sep);
+        }
+
+        function logCC(e) {
+            console.log(e);
+
+            var msg = e.data;   // Uint8Array
+            var dec = "";
+            var hex = "";
+            for (var i=0; i<msg.byteLength; i++) {
+                dec = dec + msg[i].toString(10).padZero(3) + " ";
+                hex = hex + msg[i].toString(16).padZero(2) + " ";
+            }
+            $("#cc").prepend(dec.trim() + " - " + hex.trim().toUpperCase() + "\n");
+        }
+
+        const DEVICE_NAME_IN = "Bass Station II";
+        const DEVICE_NAME_OUT = "Bass Station II";
+
+        var midi_input = null;
+        var midi_output = null;
+        var midi_channel = 1;
+
+        function setMidiChannel() {
+
+            disconnectInput();
+//            disconnectOutput();
+
+            midi_channel = this.value;
+            log(`midi channel set to ${this.value}`);
+
+            connectInput();
+//            connectOutput();
+
+        }
+
+        function connectDevice() {}
+
+        function disconnectDevice() {}
+
+        // events listeners
+        cc_listener = function(e) {
+            logCC(e);
+        };
+
+        function setInput(input) {
+//            console.log('connect input', input);
+            midi_input = input;
+//            midi_input.on('controlchange', midi_channel, cc_listener);
+//            log(`"${input.name}" input connected.`)
+        }
+
+
+        /**
+         *
+         * @param input
+         */
+        function connectInput() {
+//            console.log('connect input', input);
+//            midi_input = input;
+            midi_input.on('controlchange', midi_channel, cc_listener);
+            log(`"${midi_input.name}" input connected.`)
+        }
+
+        /**
+         *
+         * @param output
+         */
+        function connectOutput(output) {
+            console.log('connect output', output);
+            midi_output = output;
+            log(`"${midi_output.name}" output connected.`)
+        }
+
+        function disconnectInput() {
+            //midi_input.removeListener('controlchange', midi_channel, cc_listener);
+//            midi_input.removeListener('controlchange', midi_channel);   // remove all listeners of spec. type
+            midi_input.removeListener();   // remove all listeners on all channels
+            log(`"${midi_input.name}" input disconnected.`)
+//            midi_input = null;
+
+        }
+
+        function disconnectOutput() {
+            log(`"${midi_output.name}" output disconnected.`)
+//            midi_output = null;
+        }
+
+        /**
+         *
+         * @param info
+         */
+        function deviceConnect(info) {
+            console.log('deviceConnect', info);
+            logWebMidiEvent(info, true);
+            if ((info.name !== DEVICE_NAME_IN) && (info.name !== DEVICE_NAME_OUT)) {
+                log(`ignored: ${info.name}`);
+                return;
+            }
+            if (info.hasOwnProperty('input') && info.input && (info.name === DEVICE_NAME_IN)) {
+                if (!midi_input) {
+                    setInput(info.input);
+                    connectInput();
+                } else {
+                    log(`ignored: ${DEVICE_NAME_IN} input already connected`);
+                }
+            }
+            if (info.hasOwnProperty('output') && info.output && (info.name === DEVICE_NAME_OUT)) {
+                if (!midi_output) {
+                    connectOutput(info.output);
+                } else {
+                    log(`ignored: ${DEVICE_NAME_OUT} output already connected`);
+                }
+            }
+        }
+
+        /**
+         *
+         * @param info
+         */
+        function deviceDisconnect(info) {
+            console.log('deviceDisconnect', info);
+            logWebMidiEvent(info, true);
+            if ((info.name !== DEVICE_NAME_IN) && (info.name !== DEVICE_NAME_OUT)) {
+                console.log(`disconnect event ignored for device ${info.name}`);
+                return;
+            }
+            if (info.name === DEVICE_NAME_IN) {
+                midi_input = null;
+                log(`${DEVICE_NAME_IN} input has been disconnected.`);
+            }
+            if (info.name === DEVICE_NAME_OUT) {
+                midi_output = null;
+                log(`${DEVICE_NAME_OUT} output has been disconnected.`);
+            }
+        }
+
+        $(function() {
+
+            $('#midi-channel').change(setMidiChannel);
+
+            WebMidi.enable(function (err) {
+
+                if (err) {
+
+                    console.log('webmidi err', err);
+
+                } else {
+
+                    console.log('webmidi ok');
+                    log('WebMIDI enabled');
+
+                    WebMidi.inputs.map(i => console.log("input: ", i));
+                    WebMidi.outputs.map(i => console.log("output: ", i));
+
+                    WebMidi.addListener("connected", e => deviceConnect(e));
+                    WebMidi.addListener("disconnected", e => deviceDisconnect(e));
+
+                    let input = WebMidi.getInputByName(DEVICE_NAME_IN);
+                    if (input) {
+                        setInput(input);
+                        connectInput();
+                    } else {
+                        log(`ERR: ${DEVICE_NAME_IN} input not found.`);
+                    }
+
+                    let output = WebMidi.getOutputByName(DEVICE_NAME_OUT);
+                    if (output) {
+                        connectOutput(output);
+                    } else {
+                        log(`ERR: ${DEVICE_NAME_OUT} output not found.`);
+                    }
+
+                }
+
+            });
+
+        });
+
+    </script>
+</body>
+</html>
