@@ -6,7 +6,7 @@
     <meta name="description" content="Test Web MIDI in your browser">
     <meta name="author" content="francois.georgy@gmail.com">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script src="webmidi.min.js"></script>
+    <!--<script src="webmidi.min.js"></script>-->
     <style>
         .gray-box {
             border: 1px solid #aaa;
@@ -15,7 +15,6 @@
             margin: 1rem;
             text-align: left;
         }
-        
         #events, #states, #inputs, #outputs {
             font-family: monospace;
             white-space: pre;
@@ -55,7 +54,9 @@
         }
 
         function handleMessage(event) {
-            console.log("handleMessage", event);
+            // console.log("handleMessage", event);
+
+            printr('m', "#events");
 
             if (event instanceof MIDIMessageEvent) {
 
@@ -78,10 +79,10 @@
                 }
                 */
 
-                printr(`${event.type}: ${port.type} "${port.name}" chan:${channel} type:${type} data:${bytes}`, "#events");
+                printr(event.type + ': ' + port.type + ' ' + port.name + ' chan:' + channel + ' type:' + type + ' data:' + bytes, "#events");
 
             } else {
-                printr(`${event.type}: ${event.data}`, "#events");
+                printr(event.type + ': ' + event.data, "#events");
             }
         }
 
@@ -90,17 +91,53 @@
             $("#inputs").html("");
             $("#outputs").html("");
 
+
+            var inputs = [];
+            var iter = midiAccess.inputs.values();
+            for (var o = iter.next(); !o.done; o = iter.next()) {
+                inputs.push(o.value);
+            }
+
+            for (var port = 0; port < inputs.length; port++) {
+
+                var input = inputs[port];
+
+                //print('in: ' + inputs[port].id, "#inputs");
+
+                // print('in: ' + input.id, "#inputs");
+                // print('name: ' + input.name, "#inputs");
+
+                // inputs[port].onmidimessage = function (event) {
+                //     printReceivedMessage(event.port, event.data);
+                // };
+                //
+                // inputs[port].onstatechange = function (event) {
+                //     var port = event.port;
+                //     printString("MIDIInputPort onstatechange name:" + port.name + " connection:" + port.connection + " state:" + port.state);
+                // };
+
+                // var short_id = input.id.substring(0, 6) + "...";
+                var short_id = input.id;
+                print(input.type + ' id:' + short_id + ' "' + input.name + '" by "' + input.manufacturer + '" ver. ' + input.version, "#inputs");
+
+            }
+
+
+/*
             for (var entry of midiAccess.inputs) {
                 var input = entry[1];
                 var short_id = input.id.substring(0, 6) + "...";
-                print(`${input.type} id:${short_id} "${input.name}" by "${input.manufacturer}" ver. ${input.version}`, "#inputs");
+                print('x');
+                print(input.type + ' id:' + short_id + ' "' + input.name + '" by "' + input.manufacturer + '" ver. ' + input.version, "#inputs");
             }
 
             for (var entry of midiAccess.outputs) {
                 var output = entry[1];
-                var short_id = output.id.substring(0, 6) + "...";
-                print(`${output.type} id:${short_id} "${output.name}" by "${output.manufacturer}" ver. ${output.version}`, "#outputs");
+                short_id = output.id.substring(0, 6) + "...";
+                print('y');
+                print(output.type + ' id:' + short_id + ' "' + output.name + '" by "' + output.manufacturer + '" ver. ' + output.version, "#outputs");
             }
+*/
         }
 
         function handleStateChange(event) {
@@ -110,22 +147,22 @@
             /** @type (MIDIInput|MIDIOutput) */
             var p = event.port;
 
-            printr(`state change: ${p.type} "${p.name}": ${p.state}`, "#events")
+            printr('state change: ' + p.type + ' "' + p.name + '": ' + p.state, "#events");
 
             if (p.state === "connected") {
                 // Handle the connection
-                printr(`port connection: ${p.type} "${p.name}"`, "#states");
+                printr('port connection: ' + p.type + ' "' + p.name + '"', "#states");
                 if (p.type === "input") {
                     p.onmidimessage = handleMessage;
                 }
             } else if (p.state === "disconnected") {
                 // Handle the disconnection
-                printr(`port disconnection: ${p.type} "${p.name}"`, "#states");
+                printr('port disconnection: ' + p.type + ' "' + p.name + '"', "#states");
                 if (p.type === "input") {
                     p.onmidimessage = null;
                 }
             } else {
-                printr(`port ${p.type} "${p.name}" is in an unknown state: ${p.state}`, "#states");
+                printr('port ' + p.type + ' "' + p.name + '" is in an unknown state: ' + p.state , "#states");
                 
             }
 
@@ -133,6 +170,7 @@
         }
 
         $(function () {
+            printr("Starting...", "#states");
             navigator.requestMIDIAccess({ sysex: true }).then(onMIDISuccess, onMIDIFailure);
             function onMIDISuccess(midiAccess) {
                 printr("Got access to MIDI", "#states");
