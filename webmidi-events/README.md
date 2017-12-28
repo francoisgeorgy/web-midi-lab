@@ -6,3 +6,21 @@ therefore be directly accessed.
 - Each change of input or output is notified by an event sent by WebMidi. So, the application's state needs to be
 updated each time WedMidi send an event.
  
+# Dev notes
+
+__Force UI update when an event occurs:__ If we don't display events and since we don't store the inputs/outputs in the state, 
+when a change occurs in WebMidiJS than we need to be able to update the UI. We have the following two possibilities:
+
+    forceUpdate()
+
+Calling `forceUpdate()` will cause `render()` to be called on the component, skipping `shouldComponentUpdate()`. 
+Doc: https://reactjs.org/docs/react-component.html#forceupdate
+    
+    setState()
+
+`setState()` will always trigger a re-render unless conditional rendering logic is implemented in  shouldComponentUpdate(). 
+Doc: https://reactjs.org/docs/react-component.html#setstate
+
+More info: https://stackoverflow.com/questions/30626030/can-you-force-a-react-component-to-rerender-without-calling-setstate
+
+  
