@@ -2,6 +2,19 @@ import React, {Component} from 'react';
 import './App.css';
 import WebMidi from '../node_modules/webmidi';
 import PropTypes from 'prop-types';
+import {eventToString, eventUniqueID} from "./utils/events";
+
+function ChannelSelect() {
+    return (
+        <div>
+            listen on channel:
+            <label><input type="checkbox" value="all" />all</label>
+            {[...Array(16)].map((v, i) =>
+            <label><input type="checkbox" value={i+1} />{i+1}</label>
+            )}
+        </div>
+    );
+}
 
 /**
  * Return webmidi input name from input id
@@ -27,12 +40,19 @@ function connection(c, props) {
     switch (c.type) {
         case 'input':
             // console.log('input', props);
+            let select = '';
+            if (props.connectedInputs &&
+                props.connectedInputs.length > 0 &&
+                props.connectedInputs.includes(c.id)) {
+                select = <ChannelSelect/>;
+            }
             return (
                 <div>
                     <label>
-                        <input type="checkbox" onClick={() => props.handleInputSelect(c.id)} />
+                        <input type="checkbox" onClick={() => props.handleSelection(c.id)} />
                     </label>
                     <b>{c.name}</b>: {c.type} {c.connection} {c.state} "{c.manufacturer}" {c.id}
+                    {select}
                 </div>
             );
         case 'output':
@@ -54,26 +74,26 @@ function connection(c, props) {
  * @returns {*}
  * @constructor
  */
-function Connections(props) {
-    console.log("render <Connections>", props.connections);
-    if (!props.connections) return <div></div>;
+function Ports(props) {
+    console.log("render <Connections>", props.ports);
+    if (!props.ports) return <div></div>;
     return (
         <div>
             <ul>
-                {props.connections.map(i => <li key={i.id}>{connection(i, props)}</li>)}
+                {props.ports.map(i => <li key={i.id}>{connection(i, props)}</li>)}
             </ul>
         </div>
     );
 }
 
-function Connected(props) {
-    console.log("render <Connected>", props.ins);
-    if (!props.ins || props.ins.length===0) return <div></div>;
+function ConnectedInputs(props) {
+    console.log("render <Connected>", props.connectedInputs);
+    if (!props.connectedInputs || props.connectedInputs.length===0) return <div></div>;
     return (
         <div>
             <h4>connected inputs:</h4>
             <ul>
-                {props.ins.map(i => <li key={i}>{inputName(i)}</li>)}
+                {props.connectedInputs.map(i => <li key={i}>{inputName(i)}</li>)}
             </ul>
         </div>
     );
@@ -86,13 +106,10 @@ function Connected(props) {
  */
 function PortEvents(props) {
     console.log("render <PortEvents>", props.events);
-
-    //TODO: can the timestamp be used as a _unique_ key in the iterator below? If not unique --> create a unique key with timestamp+id.
-
     let n = Math.min(props.count || 0, props.events.length);
     return (
         <div>
-            {props.events.slice(-n).reverse().map(e => <div key={e.timestamp}>[{e.timestamp.toFixed(6)}] {e.type} {e.port.type} {e.port.name} {e.port.id}</div>)}
+            {props.events.slice(-n).reverse().map(e => <div key={eventUniqueID(e)}>{eventToString(e)}</div>)}
         </div>
     );
 }
@@ -102,6 +119,8 @@ PortEvents.propTypes = {
     events: PropTypes.array.isRequired
 };
 
+
+
 /**
  * Render the N last input events
  * @param props
@@ -109,13 +128,10 @@ PortEvents.propTypes = {
  */
 function InputEvents(props) {
     console.log("render <InputEvents>", props.events);
-
-    //TODO: can the timestamp be used as a _unique_ key in the iterator below? If not unique --> create a unique key with timestamp+id.
-
     let n = Math.min(props.count || 0, props.events.length);
     return (
         <div>
-            {props.events.slice(-n).reverse().map(e => <div key={e.timestamp}>[{e.timestamp.toFixed(6)}] {e.type}</div>)}
+            {props.events.slice(-n).reverse().map(e => <div key={eventUniqueID(e)}>{eventToString(e)}</div>)}
         </div>
     );
 }
@@ -132,7 +148,7 @@ class App extends Component {
         // outputs: null,
         events: [],         // bad for performance but good enough for this test app.       TODO: replace by a buffer (FIFO)
         inputEvents: [],         // bad for performance but good enough for this test app.  TODO: replace by a buffer (FIFO)
-        ins: []             // ids of inputs we listen to
+        connectedInputs: []             // ids of inputs we listen to
     };
 
     constructor(props) {
@@ -141,7 +157,7 @@ class App extends Component {
         // this.handleMidiState = this.handleMidiState.bind(this);
         this.handleMidiEvent = this.handleMidiEvent.bind(this);
         this.handleMidiInputEvent = this.handleMidiInputEvent.bind(this);
-        this.handleInputSelect = this.handleInputSelect.bind(this);
+        this.handleSelection = this.handleSelection.bind(this);
     }
 
     // Not needed. We can directly access the inputs and outputs through the global WebMidi object.
@@ -151,6 +167,10 @@ class App extends Component {
 
     handleMidiEvent(e) {
         console.group(`handleMidiEvent: ${e.port.constructor.name} ${e.type}: ${e.port.name}`, e);
+
+
+        // console.log(eventToString(e));
+
 
         // is disconnect event, remove the existing input listeners
         if (e.type === "disconnected") {
@@ -174,6 +194,8 @@ class App extends Component {
     handleMidiInputEvent(e) {
         console.log('handleMidiInputEvent', e);
 
+        // console.log(eventToString(e));
+
         // We store all the events in order to display them.
         // In a real app, only store the last event per port and type.
         console.log('add event to state.inputEvents');
@@ -190,8 +212,8 @@ class App extends Component {
         } else {
             console.log(`connectInput: input ${id} not found`);
         }
-        console.log('add input to state.ins');
-        this.setState({ins: [...this.state.ins, id]});
+        console.log('add input to state.connectedInputs');
+        this.setState({connectedInputs: [...this.state.connectedInputs, id]});
     }
 
     disconnectInput(id) {
@@ -202,15 +224,15 @@ class App extends Component {
         } else {
             console.log(`disconnectInput: input ${id} not found`);
         }
-        let current = this.state.ins;
-        current.splice(current.indexOf(id), 1);
-        console.log('remove input from state.ins');
-        this.setState({ins: current});
+        let current = this.state.connectedInputs;
+        current.splice(current.indexOf(id), 1);     // remove id from array
+        console.log('remove input from state.connectedInputs');
+        this.setState({connectedInputs: current});
     }
 
-    handleInputSelect(id) {
-        console.group('handleInputSelect', id);
-        if (this.state.ins.includes(id)) {
+    handleSelection(id) {
+        console.group('handleSelection', id);
+        if (this.state.connectedInputs.includes(id)) {
             this.disconnectInput(id);
         } else {
             this.connectInput(id)
@@ -246,12 +268,13 @@ class App extends Component {
                 <PortEvents events={this.state.events} count={10} />
 
                 <h2>Inputs:</h2>
-                <Connections connections={WebMidi.inputs} handleInputSelect={this.handleInputSelect} />
-                <Connected ins={this.state.ins} />
+                <Ports ports={WebMidi.inputs} connectedInputs={this.state.connectedInputs} handleSelection={this.handleSelection} />
+
+                <ConnectedInputs connectedInputs={this.state.connectedInputs} />
                 <InputEvents events={this.state.inputEvents} count={10} />
 
                 <h2>Outputs:</h2>
-                <Connections connections={WebMidi.outputs} />
+                <Ports ports={WebMidi.outputs} />
 {/*
                 <h3>State Inputs:</h3>
                 <Connections connections={this.state.inputs} />
