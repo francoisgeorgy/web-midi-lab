@@ -1,17 +1,19 @@
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
+import {createStore} from "redux";
+import {Provider, connect} from 'react-redux';
 import './App.css';
 import WebMidi from '../node_modules/webmidi';
-import PropTypes from 'prop-types';
 import {eventToString, eventUniqueID} from "./utils/events";
-import {createStore} from "redux";
+import Ports from "./components/Ports";
+import PortEvents from "./components/PortEvents";
 
-// --- redux setup ---
-
-// ACTION CREATORS
+// redux action creators
 function addId(id) {
     return {type: 'ADD_ID', id};
 }
 function addEvent(event) {
+    console.log('add event');
     return {type: 'ADD_EVENT', event};
 }
 function addInputEvent(event) {
@@ -26,16 +28,20 @@ function addInputEvent(event) {
 const initialState = {
     events: [],         // bad for performance but good enough for this test app.       TODO: replace by a buffer (FIFO)
     inputEvents: [],
-    connectedInputs: []
+    inputPorts: [],
+    outputPorts: []
 }
 
+// redux reducer
 function reducer(state = initialState, action) {
     switch (action.type) {
         case 'ADD_ID':
-            console.log(`reducer: add id ${action.id} to stats connectedInputs`);
-            return { ...state, connectedInputs: [...state.connectedInputs, action.id]};
-        case 'ADD_EVENT':
-            return { ...state, events: [...state.events, action.event]};
+            console.log(`reducer: add id ${action.id} to stats inputPorts`);
+            return { ...state, inputPorts: [...state.inputPorts, action.id]};
+        case 'ADD_EVENT':       // TODO: use combineReducer; see https://www.smashingmagazine.com/2016/06/an-introduction-to-redux/
+                                //                               https://redux.js.org/docs/recipes/reducers/UsingCombineReducers.html
+            console.log(`reducer: add event`, action.event);
+            return { ...state, events: [...state.events, action.event], inputPorts: [...state.inputPorts, action.event.port.id]};
         case 'ADD_INPUT_EVENT':
             return { ...state, inputEvents: [...state.inputEvents, action.event]};
         default:
@@ -43,22 +49,36 @@ function reducer(state = initialState, action) {
     }
 }
 
-// STORE
+//TODO
+function eventsReducer(state = {globalEvents:[], inputEvents:[]}, action) {
+    switch (action.type) {
+        case 'ADD_EVENT':
+            return { ...state, events: [...state.events, action.event]};
+        case 'ADD_INPUT_EVENT':
+            return { ...state, inputEvents: [...state.inputEvents, action.event]};
+        // 'ADD_INPUT_LISTENER'
+        // 'REMOVE_INPUT_LISTENER'
+        default:
+            return state
+    }
+}
+
+//TODO
+function portsReducer(state = {inputPorts:[], outputPorts:[]}, action) {
+    switch (action.type) {
+        case 'ADD_INPUT_PORT':
+            return { ...state, inputPorts: [...state.inputPorts, action.port.id]};
+        case 'REMOVE_INPUT_PORT':
+        case 'ADD_OUTPUT_PORT':
+        case 'REMOVE_OUTPUT_PORT':
+        default:
+            return state
+    }
+}
+
+// redux store
 const store = createStore(reducer);
 
-//--- end of redux setup ---
-
-function ChannelSelect() {
-    return (
-        <div>
-            listen on channel:
-            <label><input type="checkbox" value="all" />all</label>
-            {[...Array(16)].map((v, i) =>
-                <label key={i}><input type="checkbox" value={i + 1}/>{i + 1}</label>
-            )}
-        </div>
-    );
-}
 
 /**
  * Return webmidi input name from input id
@@ -75,94 +95,18 @@ function inputById(id) {
     return WebMidi.inputs.find(item => item.id === id);
 }
 
-/**
- * Render a single midi connection
- * @param c
- * @returns {*}
- */
-function connection(c, props) {
-    switch (c.type) {
-        case 'input':
-            // console.log('input', props);
-            let select = '';
-            if (props.connectedInputs &&
-                props.connectedInputs.length > 0 &&
-                props.connectedInputs.includes(c.id)) {
-                select = <ChannelSelect/>;
-            }
-            return (
-                <div>
-                    <label>
-                        <input type="checkbox" onClick={() => props.handleSelection(c.id)} />
-                    </label>
-                    <b>{c.name}</b>: {c.type} {c.connection} {c.state} "{c.manufacturer}" {c.id}
-                    {select}
-                </div>
-            );
-        case 'output':
-            return (
-                <div>
-                    <b>{c.name}</b>: {c.type} {c.connection} {c.state} "{c.manufacturer}" {c.id}
-                </div>
-            );
-        default:
-            return (
-                <div>ERROR: unknown type: {c.type}</div>
-            );
-    }
-}
-
-/**
- * Render a group of midi connections
- * @param props
- * @returns {*}
- * @constructor
- */
-function Ports(props) {
-    console.log("render <Connections>", props.ports);
-    if (!props.ports) return <div></div>;
-    return (
-        <div>
-            <ul>
-                {props.ports.map(input => <li key={input.id}>{connection(input, props)}</li>)}
-            </ul>
-        </div>
-    );
-}
-
-function ConnectedInputs(props) {
-    console.log("render <Connected>", props.connectedInputs);
-    if (!props.connectedInputs || props.connectedInputs.length===0) return <div></div>;
+function inputPorts(props) {
+    console.log("render <Connected>", props.inputPorts);
+    if (!props.inputPorts || props.inputPorts.length===0) return <div></div>;
     return (
         <div>
             <h4>connected inputs:</h4>
             <ul>
-                {props.connectedInputs.map(id => <li key={id}>{inputName(id)}</li>)}
+                {props.inputPorts.map(id => <li key={id}>{inputName(id)}</li>)}
             </ul>
         </div>
     );
 }
-
-/**
- * Render the N last midi events
- * @param props
- * @constructor
- */
-function PortEvents(props) {
-    console.log("render <PortEvents>", props.events);
-    let n = Math.min(props.count || 0, props.events.length);
-    return (
-        <div>
-            {props.events.slice(-n).reverse().map(e => <div key={eventUniqueID(e)}>{eventToString(e)}</div>)}
-        </div>
-    );
-}
-
-PortEvents.propTypes = {
-    count: PropTypes.number,
-    events: PropTypes.array.isRequired
-};
-
 
 
 /**
@@ -194,7 +138,7 @@ class App extends Component {
         // outputs: null,
         events: [],         // bad for performance but good enough for this test app.       TODO: replace by a buffer (FIFO)
         inputEvents: [],         // bad for performance but good enough for this test app.  TODO: replace by a buffer (FIFO)
-        connectedInputs: []             // ids of inputs we listen to
+        inputPorts: []             // ids of inputs we listen to
     };
 */
 
@@ -247,6 +191,7 @@ class App extends Component {
         // In a real app, only store the last event per port and type.
         console.log('add event to state.events');
         // this.setState({ events: [...this.state.events, e]})
+
         store.dispatch(addEvent(e));
 
         // this.handleMidiState();
@@ -275,8 +220,8 @@ class App extends Component {
         } else {
             console.log(`connectInput: input ${id} not found`);
         }
-        console.log('add input to state.connectedInputs');
-        // this.setState({connectedInputs: [...this.state.connectedInputs, id]});
+        console.log('add input to state.inputPorts');
+        // this.setState({inputPorts: [...this.state.inputPorts, id]});
         store.dispatch(addId(id));
     }
 
@@ -288,15 +233,15 @@ class App extends Component {
         } else {
             console.log(`disconnectInput: input ${id} not found`);
         }
-        let current = this.state.connectedInputs;
+        let current = this.state.inputPorts;
         current.splice(current.indexOf(id), 1);     // remove id from array
-        console.log('remove input from state.connectedInputs');
-        this.setState({connectedInputs: current});
+        console.log('remove input from state.inputPorts');
+        this.setState({inputPorts: current});
     }
 
     handleSelection(id) {
         console.group('handleSelection', id);
-        if (this.state.connectedInputs.includes(id)) {
+        if (this.state.inputPorts.includes(id)) {
             this.disconnectInput(id);
         } else {
             this.connectInput(id)
@@ -326,28 +271,24 @@ class App extends Component {
 
     render() {
         return (
-            <div className="App">
+            <Provider store={store}>
+                <div className="App">
 
-                <h2>Events:</h2>
-                <PortEvents events={this.state.events} count={10} />
+                    <h2>Events:</h2>
+                    <PortEvents count={10} />
 
-                <h2>Inputs:</h2>
-                <Ports ports={WebMidi.inputs} connectedInputs={this.state.connectedInputs} handleSelection={this.handleSelection} />
-
-                <ConnectedInputs connectedInputs={this.state.connectedInputs} />
-                <InputEvents events={this.state.inputEvents} count={10} />
-
-                <h2>Outputs:</h2>
-                <Ports ports={WebMidi.outputs} />
+                    <h2>Inputs:</h2>
+                    <Ports ports={WebMidi.inputs} handleSelection={this.handleSelection} />
 {/*
-                <h3>State Inputs:</h3>
-                <Connections connections={this.state.inputs} />
-                <h3>State Outputs:</h3>
-                <Connections connections={this.state.outputs} />
-                <hr />
+
+                    <inputPorts inputPorts={this.state.inputPorts} />
+                    <InputEvents events={this.state.inputEvents} count={10} />
+
+                    <h2>Outputs:</h2>
+                    <Ports ports={WebMidi.outputs} />
 */}
-                {/* Using the global webmidi object instead of using a state-saved copy of the inputs and outputs: */}
-            </div>
+                </div>
+            </Provider>
         );
     }
 

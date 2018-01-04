@@ -23,18 +23,27 @@ Doc: https://reactjs.org/docs/react-component.html#setstate
 
 More info: https://stackoverflow.com/questions/30626030/can-you-force-a-react-component-to-rerender-without-calling-setstate
 
+
 ## Redux
 
 http://jilles.me/react-redux-and-react-redux/
 
+If we do not save the midi inputs/outputs in the state, then the associated components (e.g. Ports) will not
+rerender when the list change in WebMidi. So, instead of storing only the _connected_ (the one we listen to) input in the
+state, we will "mirror" the WebMidi inputs/outputs arrays. That is, we will update the state each time a connect or disconnect
+event is received. 
+
 We will save the following global state in Redux:
 
-- connected inputs with, for each:
-    - input ID : String
-    - channel : number or "all"
-    - types : array of String
+- available ports with, for each:
+    - type : input / output
+    - ignore : boolean  (we consider any port active by default)
+    - ID : String
+    - channel(s) : number(s) or "all"
+    - msg types : array of String
     
 - events
 
 We store events so we can have components displaying only some kind of events. 
 Having only a global state in redux store simplify the implementation.
+

@@ -4,13 +4,12 @@
 // At the moment, we only distinguish "port" events and "input" events.
 
 function portEventToString(event) {
-    console.log("port event", event);
+    // console.log("port event", event);
     return `${event.timestamp.toFixed(3)} ${event.type} ${event.port.type} ${event.port.name} ${event.port.id}`;
 }
 
 function inputEventToString(event) {
-    console.log("input event", event);
-    // ${event.target.type}
+    // console.log("input event", event);
     return `${event.timestamp.toFixed(3)} ${event.type} on channel ${event.channel} of ${event.target.name}`;
 }
 
