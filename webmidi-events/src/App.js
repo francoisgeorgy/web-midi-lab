@@ -10,7 +10,7 @@ function ChannelSelect() {
             listen on channel:
             <label><input type="checkbox" value="all" />all</label>
             {[...Array(16)].map((v, i) =>
-            <label><input type="checkbox" value={i+1} />{i+1}</label>
+                <label><input type="checkbox" value={i+1} />{i+1}</label>
             )}
         </div>
     );
@@ -148,7 +148,7 @@ class App extends Component {
         // outputs: null,
         events: [],         // bad for performance but good enough for this test app.       TODO: replace by a buffer (FIFO)
         inputEvents: [],         // bad for performance but good enough for this test app.  TODO: replace by a buffer (FIFO)
-        connectedInputs: []             // ids of inputs we listen to
+        connectedInputs: [] // array of tuples {input ID, channel, [events]}
     };
 
     constructor(props) {
@@ -204,19 +204,19 @@ class App extends Component {
         // this.handleMidiState();
     }
 
-    connectInput(id) {
+    connectInput(id, channel) {
         const i = inputById(id);
         if (i) {
             i.addListener('noteon', 'all', this.handleMidiInputEvent);
-            console.log(`connectInput: input ${id} connected`);
+            console.log(`connectInput: input ${id} channel ${channel} connected`);
+            console.log('add {id, channel} to state.connectedInputs');
+            this.setState({connectedInputs: [...this.state.connectedInputs, {id, channel} ]});
         } else {
             console.log(`connectInput: input ${id} not found`);
         }
-        console.log('add input to state.connectedInputs');
-        this.setState({connectedInputs: [...this.state.connectedInputs, id]});
     }
 
-    disconnectInput(id) {
+    disconnectInput(id, channel) {
         const i = inputById(id);
         if (i) {
             i.removeListener();
@@ -230,12 +230,12 @@ class App extends Component {
         this.setState({connectedInputs: current});
     }
 
-    handleSelection(id) {
-        console.group('handleSelection', id);
+    handleSelection(id, channel) {
+        console.group('handleSelection ${id} ${channel}');
         if (this.state.connectedInputs.includes(id)) {
             this.disconnectInput(id);
         } else {
-            this.connectInput(id)
+            this.connectInput(id, channel)
         }
         console.groupEnd();
     }
