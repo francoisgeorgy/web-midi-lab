@@ -23,4 +23,18 @@ Doc: https://reactjs.org/docs/react-component.html#setstate
 
 More info: https://stackoverflow.com/questions/30626030/can-you-force-a-react-component-to-rerender-without-calling-setstate
 
-  
+## Redux
+
+http://jilles.me/react-redux-and-react-redux/
+
+We will save the following global state in Redux:
+
+- connected inputs with, for each:
+    - input ID : String
+    - channel : number or "all"
+    - types : array of String
+    
+- events
+
+We store events so we can have components displaying only some kind of events. 
+Having only a global state in redux store simplify the implementation.

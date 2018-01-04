@@ -3,6 +3,50 @@ import './App.css';
 import WebMidi from '../node_modules/webmidi';
 import PropTypes from 'prop-types';
 import {eventToString, eventUniqueID} from "./utils/events";
+import {createStore} from "redux";
+
+// --- redux setup ---
+
+// ACTION CREATORS
+function addId(id) {
+    return {type: 'ADD_ID', id};
+}
+function addEvent(event) {
+    return {type: 'ADD_EVENT', event};
+}
+function addInputEvent(event) {
+    return {type: 'ADD_INPUT_EVENT', event};
+}
+
+// REDUCER
+// A reducer takes the current state and returns a new state depending on the action.
+// The state can never be undefined so you should always give it a default state
+// and always return some sort of state (never undefined).
+
+const initialState = {
+    events: [],         // bad for performance but good enough for this test app.       TODO: replace by a buffer (FIFO)
+    inputEvents: [],
+    connectedInputs: []
+}
+
+function reducer(state = initialState, action) {
+    switch (action.type) {
+        case 'ADD_ID':
+            console.log(`reducer: add id ${action.id} to stats connectedInputs`);
+            return { ...state, connectedInputs: [...state.connectedInputs, action.id]};
+        case 'ADD_EVENT':
+            return { ...state, events: [...state.events, action.event]};
+        case 'ADD_INPUT_EVENT':
+            return { ...state, inputEvents: [...state.inputEvents, action.event]};
+        default:
+            return state
+    }
+}
+
+// STORE
+const store = createStore(reducer);
+
+//--- end of redux setup ---
 
 function ChannelSelect() {
     return (
@@ -10,7 +54,7 @@ function ChannelSelect() {
             listen on channel:
             <label><input type="checkbox" value="all" />all</label>
             {[...Array(16)].map((v, i) =>
-            <label><input type="checkbox" value={i+1} />{i+1}</label>
+                <label key={i}><input type="checkbox" value={i + 1}/>{i + 1}</label>
             )}
         </div>
     );
@@ -80,7 +124,7 @@ function Ports(props) {
     return (
         <div>
             <ul>
-                {props.ports.map(i => <li key={i.id}>{connection(i, props)}</li>)}
+                {props.ports.map(input => <li key={input.id}>{connection(input, props)}</li>)}
             </ul>
         </div>
     );
@@ -93,7 +137,7 @@ function ConnectedInputs(props) {
         <div>
             <h4>connected inputs:</h4>
             <ul>
-                {props.connectedInputs.map(i => <li key={i}>{inputName(i)}</li>)}
+                {props.connectedInputs.map(id => <li key={id}>{inputName(id)}</li>)}
             </ul>
         </div>
     );
@@ -143,6 +187,8 @@ InputEvents.propTypes = {
 
 class App extends Component {
 
+    // MOVED INTO REDUX STORE
+/*
     state = {
         // inputs: null,    // no need to store inputs or outputs in the state because WebMidi object is globally accessible.
         // outputs: null,
@@ -150,6 +196,7 @@ class App extends Component {
         inputEvents: [],         // bad for performance but good enough for this test app.  TODO: replace by a buffer (FIFO)
         connectedInputs: []             // ids of inputs we listen to
     };
+*/
 
     constructor(props) {
         super(props);
@@ -158,6 +205,20 @@ class App extends Component {
         this.handleMidiEvent = this.handleMidiEvent.bind(this);
         this.handleMidiInputEvent = this.handleMidiInputEvent.bind(this);
         this.handleSelection = this.handleSelection.bind(this);
+
+        // REDUX:
+        // default state
+        this.state = store.getState();
+        // function that will execute every time the state changes
+        this.unsubscribe = store.subscribe(() => {      // Adds a change listener. It will be called any time an action is dispatched,
+            this.setState(store.getState());            // and some part of the state tree may potentially have changed. You may then call getState()
+        });                                             // to read the current state tree inside the callback.
+                                                        // RETURNS a function that unsubscribes the change listener.
+
+    }
+
+    componentWillUnmount() {
+        this.unsubscribe();
     }
 
     // Not needed. We can directly access the inputs and outputs through the global WebMidi object.
@@ -185,7 +246,8 @@ class App extends Component {
         // We store all the events in order to display them.
         // In a real app, only store the last event per port and type.
         console.log('add event to state.events');
-        this.setState({ events: [...this.state.events, e]})
+        // this.setState({ events: [...this.state.events, e]})
+        store.dispatch(addEvent(e));
 
         // this.handleMidiState();
         console.groupEnd();
@@ -199,7 +261,8 @@ class App extends Component {
         // We store all the events in order to display them.
         // In a real app, only store the last event per port and type.
         console.log('add event to state.inputEvents');
-        this.setState({ inputEvents: [...this.state.inputEvents, e]})
+        // this.setState({ inputEvents: [...this.state.inputEvents, e]})
+        store.dispatch(addInputEvent(e));
 
         // this.handleMidiState();
     }
@@ -213,7 +276,8 @@ class App extends Component {
             console.log(`connectInput: input ${id} not found`);
         }
         console.log('add input to state.connectedInputs');
-        this.setState({connectedInputs: [...this.state.connectedInputs, id]});
+        // this.setState({connectedInputs: [...this.state.connectedInputs, id]});
+        store.dispatch(addId(id));
     }
 
     disconnectInput(id) {
