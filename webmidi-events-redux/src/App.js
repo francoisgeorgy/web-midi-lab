@@ -102,6 +102,16 @@ function portsReducer(state = {inputPorts:[], outputPorts:[]}, action) {
     }
 }
 
+// https://github.com/reactjs/react-redux/blob/master/docs/api.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options
+/*
+const mapDispatchToProps = (dispatch) => {
+    return {
+        listenInput: (event) => dispatch(addInputListener(event))
+    }
+}
+*/
+
+
 // redux store
 const store = createStore(combineReducers({events: eventsReducer, ports: portsReducer}));
 
@@ -187,12 +197,13 @@ class App extends Component {
         // In a real app, only store the last event per port and type.
         console.log('add event to state.inputEvents');
         // this.setState({ inputEvents: [...this.state.inputEvents, e]})
-        store.dispatch(addInputEvent(e));
+        // store.dispatch(addInputEvent(e));
 
         // this.handleMidiState();
     }
 
     connectInput(id) {
+        console.log(`connectInput(${id})`);
         const i = inputFromId(id);
         if (i) {
             i.addListener('noteon', 'all', this.handleMidiInputEvent);
@@ -207,6 +218,7 @@ class App extends Component {
     }
 
     disconnectInput(id) {
+        console.log(`disconnectInput(${id})`);
         const i = inputFromId(id);
         if (i) {
             i.removeListener();
@@ -221,9 +233,12 @@ class App extends Component {
         // this.setState({inputPorts: current});
     }
 
+    /**
+     * Select an input port / will toggle listening to this port (add/remove listener)
+     */
     handleSelection(id) {
-        console.group('handleSelection', id);
-        if (this.state.inputPorts.includes(id)) {
+        console.group(`handleSelection(${id})`);
+        if (this.state.ports.inputPorts.includes(id)) {
             this.disconnectInput(id);
         } else {
             this.connectInput(id)

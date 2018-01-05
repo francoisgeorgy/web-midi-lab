@@ -19,6 +19,14 @@ h2 {
     white-space: pre;
 }
 
+span.switch {
+    margin: 0 1rem;
+}
+
+span.switch a {
+    text-decoration: none;
+}
+
 .debug {
     margin: 1rem 0;
     padding: 0.5rem;

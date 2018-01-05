@@ -13,7 +13,7 @@ class Ports extends Component {
         return (
             <div className="box ports">
             {ports[type === 'input' ? 'inputPorts' : 'outputPorts'].map(port =>
-                <Port id={port}/>
+                <Port key={port} id={port} {...this.props.handleSelection ? {'handleSelection':this.props.handleSelection} : {}} />  // ... has a lower precedence than the conditionnal operator
             )}
             </div>
         )
