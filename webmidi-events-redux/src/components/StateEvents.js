@@ -7,11 +7,11 @@ import {eventToString, eventUniqueID} from "../utils/events";
  * @param props
  * @constructor
  */
-class PortEvents extends Component {
+class StateEvents extends Component {
     render() {
         const { events, count } = this.props;
-        console.log("PortEvents.render", count, events);
-        let ev = events.portEvents;
+        console.log("StateEvents.render", count, events);
+        let ev = events.stateEvents;
         let n = Math.min(count || 0, ev.length);
         if (events) {
             return (
@@ -32,11 +32,11 @@ const mapStateToProps = (state) => {
 }
 
 // very important!
-export default PortEvents = connect(mapStateToProps)(PortEvents);
+export default StateEvents = connect(mapStateToProps)(StateEvents);
 
 /*
 
-PortEvents.propTypes = {
+StateEvents.propTypes = {
     count: PropTypes.number,
     events: PropTypes.array.isRequired
 };

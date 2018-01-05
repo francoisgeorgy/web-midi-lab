@@ -3,9 +3,20 @@
 // by looking at the event's properties.
 // At the moment, we only distinguish "port" events and "input" events.
 
+function isConnectEvent(event) {
+    return event && event.type && (event.type === 'connected');
+}
+
+function isDisconnectEvent(event) {
+    return event && event.type && (event.type === 'disconnected');
+}
+
 function portEventToString(event) {
     // console.log("port event", event);
-    return `${event.timestamp.toFixed(3)} ${event.type} ${event.port.type} ${event.port.name} ${event.port.id}`;
+    //return `${event.timestamp.toFixed(3)} ${event.type} ${event.port.type} ${event.port.name} ${event.port.id}`;
+    // return `${event.timestamp.toFixed(3)} ${event.type} ${event.port.type} "${event.port.name}" (connection ${event.port.connection}) (id ...${event.port.id.substr(event.port.id.length - 8)})`;
+
+    return `${event.timestamp.toFixed(3)} ${event.type} ${event.port.type} "${event.port.name}" (id ...${event.port.id.substr(event.port.id.length - 8)})`;
 }
 
 function inputEventToString(event) {
@@ -46,6 +57,8 @@ function eventUniqueID(event) {
 }
 
 export {
+    isConnectEvent,
+    isDisconnectEvent,
     eventToString,
     eventUniqueID
 }

@@ -1,5 +1,7 @@
 import React, {Component} from 'react';
 import ChannelSelect from "./ChannelSelect";
+import WebMidi from "webmidi";
+import {portFromId} from "../utils/ports";
 
 
 /**
@@ -12,7 +14,21 @@ export default class Port extends Component {
      * @param c
      * @returns {*}
      */
-    connection(c, props) {
+    connection(id, props) {
+        console.log('connection', id, props);
+        let p = portFromId(id);
+        if (p) {
+            return (
+                <div>
+                    <b>{p.name}</b>: {p.type} {p.connection} {p.state} "{p.manufacturer}" {p.id}
+                </div>
+            );
+        } else {
+            return (
+                <div>port not found: {id}</div>
+            );
+        }
+        /*
         switch (c.type) {
             case 'input':
                 console.log('input', props);
@@ -43,11 +59,12 @@ export default class Port extends Component {
                     <div>ERROR: unknown type: {c.type}</div>
                 );
         }
+        */
     }
 
     render() {
         console.log('Port.render', this.props);
-        return this.connection(this.props.port, this.props)
+        return this.connection(this.props.id, this.props)
     }
 
 }

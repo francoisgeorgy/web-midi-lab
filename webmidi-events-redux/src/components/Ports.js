@@ -6,19 +6,15 @@ import Port from "./Port";
 class Ports extends Component {
 
     render() {
-        const { ports, inputPorts } = this.props;
+        const {type, ports} = this.props;
         console.log('Ports.render props', this.props);
-        console.log('Ports.render ports', ports);
-        console.log('Ports.render inputPorts', inputPorts);
+        console.log('Ports.render ports', type, ports);
+        // console.log('Ports.render inputPorts', inputPorts);
         return (
-            <div>
-                <ul>
-                {ports.map(port =>
-                    <li key={port.id}>
-                        <Port port={port}/>
-                    </li>
-                )}
-                </ul>
+            <div className="box ports">
+            {ports[type === 'input' ? 'inputPorts' : 'outputPorts'].map(port =>
+                <Port id={port}/>
+            )}
             </div>
         )
     }
@@ -36,21 +32,23 @@ const mapDispatchToProps = (dispatch) => {
 
 // https://github.com/reactjs/react-redux/blob/master/docs/api.md
 // https://github.com/reactjs/react-redux/issues/324
+/*
 const mergeProps = (stateProps, dispatchProps, ownProps) => {
     return {
         ...stateProps,
         ...ownProps,
     };
 };
+*/
 
-const mapStateToProps = (state, ownProps) => {
-    console.log('mapStateToProps', state, ownProps);
-    console.log('mapStateToProps', ownProps.ports.length, ownProps.ports);
+const mapStateToProps = (state) => {
+    // console.log('mapStateToProps', state, ownProps);
+    // console.log('mapStateToProps', ownProps.ports.length, ownProps.ports);
     return {
         // events: state.events,   // HACK needed to force re-rendering --> put midi inputs in "availableInputs" array
         // inputEvents: state.inputEvents,
         // ports: ownProps.ports,
-        inputPorts: state.inputPorts
+        ports: state.ports
     }
 }
 
