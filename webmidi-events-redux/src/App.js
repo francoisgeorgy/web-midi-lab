@@ -82,9 +82,11 @@ function portsReducer(state = {inputPorts:[], outputPorts:[]}, action) {
 
             if (state[a] && state[a].includes(p.id)) {
                 console.log(`portsReducer: REMOVE_PORT: remove port ID ${p.id} from state[${a}]`);
-                let b = state[a].slice();        // make a copy of the existing array
-                b.splice(b.indexOf(p.id), 1);    // remove id from array
-                return { ...state, [a]: b};
+                // let b = state[a].slice();        // make a copy of the existing array
+                // b.splice(b.indexOf(p.id), 1);    // remove id from array
+                // return { ...state, [a]: b};
+                let index = state[a].indexOf(p.id);
+                return {...state, [a]: [...state[a].slice(0, index), ...state[a].slice(index + 1)]};
             } else {
                 // port was not added probably because it was not open
                 console.log(`portsReducer: REMOVE_PORT: port ID ${p.id} was not presents in state[${a}]`);
