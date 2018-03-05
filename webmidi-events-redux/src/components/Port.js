@@ -50,7 +50,7 @@ export default class Port extends Component {
                         {/*</label>*/}
                         <b>{p.name}</b>: {p.type} {p.connection} {p.state} {p.manufacturer} {p.id}
                         <span className="switch"><a href="#" onClick={this.handleClick}>configure</a></span>
-                        {this.state.isOpen && <ChannelSelect id={p.id} />}
+                        {this.state.isOpen && <ChannelSelect id={p.id} handleSelection={props.handleSelection} />}
                     </div>
                 );
             case 'output':

@@ -113,9 +113,11 @@ const mapDispatchToProps = (dispatch) => {
 }
 */
 
-
+//
 // redux store
+//
 const store = createStore(combineReducers({events: eventsReducer, ports: portsReducer}));
+
 
 class App extends Component {
 
@@ -193,23 +195,50 @@ class App extends Component {
     }
 
     handleMidiInputEvent(e) {
-        console.log('handleMidiInputEvent', e);
+        console.group(`handleMidiInputEvent`, e);
+        // console.group(`handleMidiInputEvent: ${e.port.constructor.name} ${e.type}: ${e.port.name}`, e);
 
         // We store all the events in order to display them.
         // In a real app, only store the last event per port and type.
+
         console.log('add event to state.inputEvents');
+
+        //TODO: keep n last events
+/*
+        {target: Input, data: Uint8Array(3), timestamp: 5165.7000000122935, channel: 1, type: "noteon", …}
+        channel: 1
+        data : Uint8Array(3) [144, 83, 80]
+        note : {number: 83, name: "B", octave: 4}
+        rawVelocity : 80
+        target : Input {_userHandlers: {…}, _midiInput: MIDIInput, …}
+        timestamp : 5165.7000000122935
+        type : "noteon"
+        velocity : 0.6299212598425197
+        __proto__ : Object
+*/
+
         // this.setState({ inputEvents: [...this.state.inputEvents, e]})
         // store.dispatch(addInputEvent(e));
 
         // this.handleMidiState();
+        console.groupEnd();
     }
 
     connectInput(id) {
         console.log(`connectInput(${id})`);
         const i = inputFromId(id);
         if (i) {
-            i.addListener('noteon', 'all', this.handleMidiInputEvent);
-            console.log(`connectInput: input ${id} connected`);
+
+            if (i.hasListener('noteon', 'all', this.handleMidiInputEvent)) {
+
+                console.log(`connectInput: input ${id} already has a listener`);
+
+            } else {
+
+                i.addListener('noteon', 'all', this.handleMidiInputEvent);
+                console.log(`connectInput: input ${id} connected`);
+
+            }
         } else {
             console.log(`connectInput: input ${id} not found`);
         }
@@ -223,6 +252,9 @@ class App extends Component {
         console.log(`disconnectInput(${id})`);
         const i = inputFromId(id);
         if (i) {
+
+            //note: no need to check if the listener is really there; the API won't complain if we try to remove a non-existent listener.
+
             i.removeListener();
             console.log(`disconnectInput: input ${id} disconnected`);
         } else {
@@ -237,13 +269,20 @@ class App extends Component {
 
     /**
      * Select an input port / will toggle listening to this port (add/remove listener)
+     *
+     * TODO: move in ChannelSelect object
      */
-    handleSelection(id) {
-        console.group(`handleSelection(${id})`);
+    handleSelection(id, channels, checked) {
+        console.group(`handleSelection(${id}, ${channels})`, this.state.ports.inputPorts, checked);
         if (this.state.ports.inputPorts.includes(id)) {
-            this.disconnectInput(id);
-        } else {
-            this.connectInput(id)
+        //     this.disconnectInput(id);
+        // } else {
+        //     this.connectInput(id)
+            if (checked) {
+                this.connectInput(id);
+            } else {
+                this.disconnectInput(id);
+            }
         }
         console.groupEnd();
     }

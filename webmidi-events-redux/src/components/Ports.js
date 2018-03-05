@@ -6,7 +6,7 @@ import Port from "./Port";
 class Ports extends Component {
 
     render() {
-        const {type, ports} = this.props;
+        const {type, /* handleSelection, */ ports} = this.props;
         console.log('Ports.render props', this.props);
         console.log('Ports.render ports', type, ports);
         // console.log('Ports.render inputPorts', inputPorts);

@@ -5,6 +5,20 @@ export default class ChannelSelect extends Component {
 
     // props: id of input channel (is always an input channel, we can not "listen" to an ouput channel)
 
+    constructor(props) {
+        super(props);
+        // this.state = {isOpen: false};
+        this.handleClick = this.handleClick.bind(this);
+    }
+
+    handleClick(i) {
+        console.log(`channel click: ${i}`);
+        // this.setState(function(prevState) {
+        //     console.log(prevState.isOpen);
+        //     return {isOpen: !prevState.isOpen};
+        // });
+    }
+
     render() {
 
         let p = portFromId(this.props.id);
@@ -22,9 +36,13 @@ export default class ChannelSelect extends Component {
         return (
             <div>
                 listen on channel:
-                <label><input type="checkbox" value="all" />all</label>
+                <label style={{marginRight: '0.5em'}}><input type="checkbox" value="all" onClick={() => this.props.handleSelection(this.props.id, 'all')} />all</label>
                 {[...Array(16)].map((v, i) =>
-                    <label key={i}><input type="checkbox" value={i + 1}/>{i + 1}</label>
+                    <label key={i} style={{marginRight: '0.5em'}}><input
+                        type="checkbox"
+                        value={i + 1}
+                        onChange={(event) => this.props.handleSelection(this.props.id, i + 1, event.target.checked)} />{i + 1}</label>
+                        // onClick={() => this.handleClick(i + 1)} />{i + 1}</label>
                 )}
             </div>
         )

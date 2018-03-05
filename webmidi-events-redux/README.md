@@ -1,6 +1,6 @@
 # webmidi-events
 
-- There is no need to save the WebMidi inputs and outputs in the _state_. The `WedMidi` object os global and can
+- There is no need to save the WebMidi inputs and outputs in the _state_. The `WedMidi` object is global and can
 therefore be directly accessed.
 
 - Each change of input or output is notified by an event sent by WebMidi. So, the application's state needs to be
@@ -33,7 +33,7 @@ rerender when the list change in WebMidi. So, instead of storing only the _conne
 state, we will "mirror" the WebMidi inputs/outputs arrays. That is, we will update the state each time a connect or disconnect
 event is received. 
 
-We will save the following global state in Redux:
+__We will save the following global state in Redux__:
 
 - available ports with, for each:
     - type : input / output
@@ -95,13 +95,15 @@ Doc: https://github.com/reactjs/react-redux/blob/master/docs/api.md#arguments
 
 https://github.com/acdlite/flux-standard-action
 
-An action MUST
+An action MUST:
 
-be a plain JavaScript object.
-have a type property.
-An action MAY
+- be a plain JavaScript object.
+- have a type property.
 
-have an error property.
-have a payload property.
-have a meta property.
+An action MAY:
+
+- have an error property.
+- have a payload property.
+- have a meta property.
+
 An action MUST NOT include properties other than type, payload, error, and meta.
