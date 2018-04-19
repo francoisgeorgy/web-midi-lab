@@ -46,6 +46,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
             logWebMidiEvent(e);
             if (e.port.type === "input") {
                 console.log("input port: remove events handlers");
+                //TODO
             }
         });
 

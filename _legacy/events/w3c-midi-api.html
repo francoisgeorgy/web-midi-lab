@@ -54,9 +54,9 @@
         }
 
         function handleMessage(event) {
-            // console.log("handleMessage", event);
+            console.log("handleMessage", event);
 
-            printr('m', "#events");
+            // printr('m', "#events");
 
             if (event instanceof MIDIMessageEvent) {
 
@@ -163,7 +163,7 @@
                 }
             } else {
                 printr('port ' + p.type + ' "' + p.name + '" is in an unknown state: ' + p.state , "#states");
-                
+
             }
 
             listInputsAndOutputs(midi);
