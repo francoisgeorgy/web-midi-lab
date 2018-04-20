@@ -1,6 +1,8 @@
 import {eventToString} from "./events.js";
 import Rx from "rxjs/Rx";
 
+const INPUT_NAME = "VMPK";      // linux Virtual Midi Piano Keyboard
+
 var midi = null;  // global MIDIAccess object
 var connectedInputs = [];   // array of IDs
 
@@ -118,7 +120,7 @@ function connectInput() {
     for (let entry of midi.inputs) {
         let i = entry[1];
         console.log("connectInput", i);
-        if (i.type === "input" && i.name.includes("VMPK")) {
+        if (i.type === "input" && i.name.includes(INPUT_NAME)) {
             if (connectedInputs.includes(i.id)) {
                 logWebMidiEvent(`! input "${i.name}" already connected`);
             } else {
