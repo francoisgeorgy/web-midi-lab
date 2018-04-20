@@ -1,4 +1,6 @@
-module.exports = {
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+const config = {
     module: {
         rules: [
             {
@@ -9,5 +11,12 @@ module.exports = {
                 }
             }
         ]
-    }
+    },
+    plugins: [
+        // new webpack.optimize.UglifyJsPlugin(),
+        new HtmlWebpackPlugin({template: './src/index.html'})
+    ]
 };
+
+module.exports = config;
+

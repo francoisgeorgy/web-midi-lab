@@ -18,17 +18,6 @@ function logWebMidiMessage(e) {
 
 document.addEventListener("DOMContentLoaded", function(event) {
 
-    // var noteOnSub;
-
-    function noteOnListener(e) {
-        // console.log(noteOnListener);
-        // var event = new CustomEvent('midinoteon', e);
-        document.body.dispatchEvent(new CustomEvent('custommidinoteon', {
-            detail: {
-                midi: e
-            }
-        }));
-    }
 
     WebMidi.enable(function (err) {
 
@@ -47,28 +36,36 @@ document.addEventListener("DOMContentLoaded", function(event) {
             if (e.port.type === "input" && e.port.name.includes("VMPK") > 0) {  //TODO: do only for one specific device
                 // console.log("input port: add events handlers");
 
-                if (e.port.hasListener('noteon', 'all', noteOnListener)) {
-                    console.log(`${e.port.name} already has a listener`);
-                } else {
-                    e.port.addListener('noteon', 'all', noteOnListener);
+                // if (e.port.hasListener('noteon', 'all', noteOnListener)) {
+                //     console.log(`${e.port.name} already has a listener`);
+                // } else {
+                    e.port.removeListener();
+
+                    e.port.addListener('noteon', 'all', e => {
+                        document.body.dispatchEvent(new CustomEvent("midiNotOn", { detail: e }))
+                    });
                     console.log(`${e.port.name} listener added`);
 
                     //note: make sure to instanciate this only once:
-                    const noteOnSub = Rx.Observable.fromEvent(document.body, "custommidinoteon").subscribe((e) => {
+                    const noteOnSub = Rx.Observable.fromEvent(document.body, "midiNotOn").subscribe((e) => {
                         // e.stopPropagation();
-                        console.log(`midi noteon ${e.detail.midi.target.name} ${e.detail.midi.timestamp}`, e)
+                        console.log(`midi noteon ${e.detail.target.name} ${e.detail.timestamp}`, e)
                     });
-                }
+                // }
 
             }
         });
         WebMidi.addListener("disconnected", e => {
             console.log(`${e.port.name} disconnected`);
             // logWebMidiEvent(e);
-            if (e.port.type === "input") {
-                // console.log("input port: remove events handlers");
-                console.log(`${e.port.name} listener removed`);
-            }
+
+            //note: disconnection will remove all listeners
+
+            // if (e.port.type === "input") {
+            //     console.log(`remove listener for ${e.port.name}`, e);
+            //     e.port.removeListener();
+            //     console.log(`${e.port.name} listener removed`);
+            // }
         });
 
     });
