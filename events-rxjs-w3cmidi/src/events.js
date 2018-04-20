@@ -25,11 +25,13 @@ function inputEventToString(event) {
 }
 
 function eventToString(event) {
-    if ((typeof event === 'undefined') || (event === null)) {
+    if ((typeof event === "undefined") || (event === null)) {
         console.log("eventToString: return empty string", event);
         return "";
     }
-    if (event.hasOwnProperty("port")) {
+    if (typeof event === "string") {
+        return event;
+    } else if (event.hasOwnProperty("port")) {
         return portEventToString(event);
     } else {
         return inputEventToString(event);
