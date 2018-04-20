@@ -24,6 +24,11 @@ function inputEventToString(event) {
     return `${event.timestamp.toFixed(3)} ${event.type} on channel ${event.channel} of ${event.target.name}`;
 }
 
+function inputW3EventToString(event) {
+    // console.log("inputW3EventToString input event", event);
+    return `${event.timeStamp.toFixed(3)} ${event.type} ${event.data} of ${event.target.name}`;
+}
+
 function eventToString(event) {
     if ((typeof event === "undefined") || (event === null)) {
         console.log("eventToString: return empty string", event);
@@ -31,6 +36,8 @@ function eventToString(event) {
     }
     if (typeof event === "string") {
         return event;
+    } else if (event instanceof MIDIMessageEvent) {
+        return inputW3EventToString(event);
     } else if (event.hasOwnProperty("port")) {
         return portEventToString(event);
     } else {

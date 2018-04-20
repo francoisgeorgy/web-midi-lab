@@ -1,6 +1,11 @@
 import {eventToString} from "./events.js";
 import Rx from "rxjs/Rx";
 
+var midi = null;  // global MIDIAccess object
+var connectedInputs = [];   // array of IDs
+
+
+
 function log(msg) {
     document.getElementById("events").prepend(msg + "\n");
 }
@@ -11,20 +16,23 @@ function logWebMidiEvent(e) {
 }
 
 function logWebMidiMessage(e) {
-    console.log("logWebMidiMessage", e);
+    // console.log("logWebMidiMessage", e);
     document.getElementById("messages").prepend(eventToString(e) + "\n");
 }
 
-var midi = null;  // global MIDIAccess object
-var connectedInputs = [];   // array of IDs
+function listInputsAndOutputs(midiAccess) {
 
-// function subscribeInputs(midiAccess) {
-//     var inputs = midiAccess.inputs.values();
-//     // loop over all available inputs
-//     for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
-//         input.value.onmidimessage = handleMessage;
-//     }
-// }
+    let inputs = [];
+    let iter = midiAccess.inputs.values();
+    for (let o = iter.next(); !o.done; o = iter.next()) {
+        inputs.push(o.value);
+    }
+
+    for (let port = 0; port < inputs.length; port++) {
+        let i = inputs[port];
+        logWebMidiEvent(i.type + ' id:' + i.id.substring(0, 6) + "..." + ' "' + i.name);
+    }
+}
 
 // function handleMessage(event) {
 //     console.log("handleMessage", event);
@@ -49,19 +57,62 @@ var connectedInputs = [];   // array of IDs
 //     }
 // }
 
-function listInputsAndOutputs(midiAccess) {
 
-    let inputs = [];
-    let iter = midiAccess.inputs.values();
-    for (let o = iter.next(); !o.done; o = iter.next()) {
-        inputs.push(o.value);
-    }
 
-    for (let port = 0; port < inputs.length; port++) {
-        let i = inputs[port];
-        logWebMidiEvent(i.type + ' id:' + i.id.substring(0, 6) + "..." + ' "' + i.name);
-    }
-}
+//
+// e.g.: createObservable(input, 'onmidimessage');
+//
+const createObservable = (port, handlerName) => (
+
+    // public static create(onSubscription: function(observer: Observer): TeardownLogic): Observable
+    // Creates a new Observable, that will execute the specified function when an Observer subscribes to it.
+
+    // `create` converts an onSubscription function to an actual Observable.
+
+    // Whenever someone subscribes to that Observable, the function will be called with an Observer instance as
+    // a first and only parameter. onSubscription should then invoke the Observers next, error and complete methods.
+
+    Rx.Observable.create(
+
+        // onSubscription: function(observer: Observer) :
+        observer => {
+
+            if (port.observers === undefined) {
+
+                port.observers = [];
+
+                // event handler callback definition:
+                port[handlerName] = event => {
+                    port.observers.forEach(obs => {
+                        // the callback calls next():
+                        obs.next(event);                // Calling next with a value will emit that value to the observer.
+                    });
+                };
+
+            }
+
+            port.observers.push(observer);
+
+            // onSubscription can optionally return either a function or an object with unsubscribe method.
+            // In both cases function or method will be called when subscription to Observable is being cancelled and
+            // should be used to clean up all resources.
+
+            return () => {
+                console.log("port observable unsubscribe");
+                port.observers = port.observers.filter(x => x !== observer);
+            };
+
+            // return Rx.Disposable.create(() => {
+            //     port.observers = port.observers.filter(x => x !== observer);
+            // });
+
+        } // observer()
+
+    ) // create()
+
+);
+
+var consumer;       //TODO: put in connectedInputs array
 
 function connectInput() {
     for (let entry of midi.inputs) {
@@ -71,8 +122,16 @@ function connectInput() {
             if (connectedInputs.includes(i.id)) {
                 logWebMidiEvent(`! input "${i.name}" already connected`);
             } else {
-                logWebMidiEvent(`+ connect input "${i.name}"`);
+                logWebMidiEvent(`+ connect input "${i.name}" "${i.id}"`);
                 connectedInputs.push(i.id);
+
+                // const inputStream = createObservable(i, "onmidimessage");
+                // consumer = inputStream.subscribe(message => {
+                consumer = createObservable(i, "onmidimessage").subscribe(message => {
+                    console.log(message);
+                    logWebMidiMessage(message);
+                });
+
             }
         }
     }
@@ -80,7 +139,13 @@ function connectInput() {
 }
 
 function disconnectInput(id) {
-    connectedInputs = connectedInputs.filter(element => element !== id)
+    if (connectedInputs.includes(id)) {
+        logWebMidiEvent(`+ disconnect input "${id}"`);
+        connectedInputs = connectedInputs.filter(element => element !== id);
+        if (consumer) {
+            consumer.unsubscribe();
+        }
+    }
     console.log("disconnectInput: connectedInputs", connectedInputs);
 }
 
