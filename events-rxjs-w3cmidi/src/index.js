@@ -185,6 +185,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     console.log("events-rxjs-w3cmidi starting...");
 
+    // const logDb = new PouchDB("midi-log");
+
     navigator.requestMIDIAccess({ sysex: true }).then(onMIDISuccess, onMIDIFailure);
 
 });
