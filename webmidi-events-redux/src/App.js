@@ -203,6 +203,8 @@ class App extends Component {
 
         console.log('add event to state.inputEvents');
 
+        store.dispatch(addInputEvent(e));
+
         //TODO: keep n last events
 /*
         {target: Input, data: Uint8Array(3), timestamp: 5165.7000000122935, channel: 1, type: "noteon", …}
@@ -321,12 +323,12 @@ class App extends Component {
                     <h2>Outputs:</h2>
                     <Ports type="output" />
 
-{/*
+
 
                     <inputPorts inputPorts={this.state.inputPorts} />
-                    <InputEvents events={this.state.inputEvents} count={10} />
+                    <PortEvents events={this.state.inputEvents} count={10} />
 
-*/}
+
                     <pre className={"debug"}>{JSON.stringify(this.state.ports, null, 3)}</pre>
                 </div>
             </Provider>

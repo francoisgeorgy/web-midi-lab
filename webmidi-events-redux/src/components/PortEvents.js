@@ -11,7 +11,7 @@ class PortEvents extends Component {
     render() {
         const { events, count } = this.props;
         console.log("PortEvents.render", count, events);
-        let ev = events.portEvents;
+        let ev = events.inputEvents;
         let n = Math.min(count || 0, ev.length);
         if (events) {
             return (
