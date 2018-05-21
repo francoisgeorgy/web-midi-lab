@@ -75,7 +75,7 @@ function connection(c, props) {
  * @constructor
  */
 function Ports(props) {
-    console.log("render <Connections>", props.ports);
+    console.log("render <Ports>", props.ports);
     if (!props.ports) return <div></div>;
     return (
         <div>
